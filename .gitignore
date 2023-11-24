@@ -1,5 +1,7 @@
 build
 
+build-*
+
 *.out
 *.exe
 *.so
@@ -7,3 +9,4 @@ build
 *.lib
 *.dll
 
+*.user
