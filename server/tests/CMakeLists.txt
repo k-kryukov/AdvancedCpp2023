@@ -10,5 +10,5 @@ find_package(Boost REQUIRED)
 include(GoogleTest)
 
 add_executable(server-tests tests.cpp)
-target_link_libraries(server-tests glog::glog gtest)
+target_link_libraries(server-tests glog::glog gtest service)
 gtest_discover_tests(server-tests)
