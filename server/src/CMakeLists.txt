@@ -8,4 +8,4 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_subdirectory(service)
 
 add_executable(server main.cpp)
-target_link_libraries(server service)
+target_link_libraries(server service nlohmann_json::nlohmann_json)
