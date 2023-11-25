@@ -8,10 +8,8 @@
 #include "ServiceErrorCategory.hpp"
 #include "UserData.hpp"
 
-template<typename Hash = std::hash<std::string>>
 class Service {
     std::unordered_map<std::string, size_t> users; // username -> pwd hash
-    Hash hash_{};
     std::unordered_map<std::string, std::shared_ptr<UserData>> userData;
 
 public:
@@ -24,6 +22,13 @@ public:
 
         users.emplace(userName, pswdHash);
         userData.emplace(userName, std::make_shared<UserData>());
+    }
+
+    auto getUsers() {
+        std::vector<std::string> usersList{users.size()};
+        std::transform(users.begin(), users.end(), usersList.begin(), [] (auto kv) { return kv.second; });
+
+        return usersList;
     }
 
     void removeUser(std::string const& userName, size_t pswdHash) {
