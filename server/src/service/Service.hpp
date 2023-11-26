@@ -1,3 +1,5 @@
+#pragma once
+
 #include <string>
 #include <sstream>
 #include <unordered_map>
@@ -9,7 +11,7 @@
 #include "UserData.hpp"
 
 class Service {
-    std::unordered_map<std::string, size_t> users; // username -> pwd hash
+    std::unordered_map<std::string, uint64_t> users; // username -> pwd hash
     std::unordered_map<std::string, std::shared_ptr<UserData>> userData;
 
 public:
@@ -17,7 +19,7 @@ public:
     Service(Service const&) = delete;
     Service(Service &&) = default;
 
-    void createUser(std::string const& userName, size_t pswdHash) {
+    void createUser(std::string const& userName, uint64_t pswdHash) {
         checkUserNonExistance(userName);
 
         users.emplace(userName, pswdHash);
@@ -26,19 +28,19 @@ public:
 
     auto getUsers() {
         std::vector<std::string> usersList{users.size()};
-        std::transform(users.begin(), users.end(), usersList.begin(), [] (auto kv) { return kv.second; });
+        std::transform(users.begin(), users.end(), usersList.begin(), [] (auto kv) { return kv.first; });
 
         return usersList;
     }
 
-    void removeUser(std::string const& userName, size_t pswdHash) {
+    void removeUser(std::string const& userName, uint64_t pswdHash) {
         checkUserCreds(userName, pswdHash);
 
         users.erase(userName);
         userData.erase(userName);
     }
 
-    uint64_t addNote(std::string const& userName, std::shared_ptr<Note> note) {
+    uint64_t addNote(std::string const& userName, uint64_t pswdHash, std::shared_ptr<Note> note) {
         checkUserExistance(userName);
 
         return userData[userName]->addNote(note);
@@ -74,7 +76,7 @@ private:
         }
     }
 
-    void checkUserCreds(std::string const& userName, size_t pswdHash) {
+    void checkUserCreds(std::string const& userName, uint64_t pswdHash) {
         checkUserExistance(userName);
 
         if (pswdHash != users[userName]) {

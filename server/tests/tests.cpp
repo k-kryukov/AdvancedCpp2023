@@ -7,29 +7,24 @@ TEST(Foo, Foo) {
     LOG(INFO) << "Some test!";
 }
 
-TEST(Foo, ServiceTests) {
+TEST(Foo, ServiceUsersTests) {
 	Service service;
-	std::string userName = "Kostya";
-    auto pswdHash = 123456;
-	service.createUser(userName, pswdHash);
-	LOG(INFO) << "New note with ID " << service.addNote(userName, std::make_shared<Note>("Some important notes"));
-	LOG(INFO) << "New note with ID " << service.addNote(userName, std::make_shared<Note>("Some important notes x2"));
+	auto users = std::vector{"@krecov", "username"};
 
-	LOG(INFO) << "Registered notes:";
-	for (auto x : service.getNotesList(userName))
-		LOG(INFO) << x->getText();
+    uint64_t pswdHash = 11111111111111111111ull;
+	service.createUser(users.at(0), pswdHash);
+	service.createUser(users.at(1), pswdHash);
 
-	service.removeNote(userName, 0);
-
-	for (auto x : service.getNotesList(userName))
-		LOG(INFO) << x->getText();
-
+    uint64_t wrongPassword = 11111111111211111111ull;
     ASSERT_THROW(
-        service.removeUser(userName, pswdHash - 1),
+        service.removeUser(users.at(0), wrongPassword),
         std::runtime_error
     );
 
-    service.removeUser(userName, pswdHash);
+    ASSERT_EQ(service.getUsers().size(), 2);
+    service.removeUser(users.at(0), pswdHash);
+    service.removeUser(users.at(1), pswdHash);
+    ASSERT_EQ(service.getUsers().size(), 0);
 }
 
 int main(int argc, char* argv[]) {
