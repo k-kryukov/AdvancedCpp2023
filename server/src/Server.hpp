@@ -32,6 +32,9 @@ public:
         auto&& tgt = request.target();
         if (tgt == "/users")
             beast::http::write(socket, dispatchUsers(socket, std::move(request)));
+        else if (tgt == "/notes") {
+            beast::http::write(socket, dispatchNotes(socket, std::move(request)));
+        }
         else {
             beast::http::write(socket, handler_.handleUnexpectedRequest(socket, std::move(request)));
         }
@@ -48,6 +51,21 @@ public:
         }
         else if (request.method() == boost::beast::http::verb::delete_) {
             auto resp = handler_.handleRemoveUserRequest(socket, std::move(request));
+            return resp;
+        }
+        else {
+            auto resp = handler_.handleUnexpectedRequest(socket, std::move(request));
+            return resp;
+        }
+    }
+
+    Handler::ResponseType dispatchNotes(asio::ip::tcp::socket& socket, beast::http::request<beast::http::string_body> request) {
+        if (request.method() == boost::beast::http::verb::post) {
+            auto resp = handler_.handleNoteCreation(socket, std::move(request));
+            return resp;
+        }
+        else if (request.method() == boost::beast::http::verb::get) {
+            auto resp = handler_.handleGetNotes(socket, std::move(request));
             return resp;
         }
         else {

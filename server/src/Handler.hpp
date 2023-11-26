@@ -99,22 +99,16 @@ public:
     }
 
     ResponseType handleGetUsers(asio::ip::tcp::socket& socket, beast::http::request<beast::http::string_body> request) {
-        ResponseType response;
+        ResponseWrapper response;
 
         LOG(INFO) << "Generating response for register request!";
-        response.version(request.version());
-        response.result(beast::http::status::ok);
-        response.set(beast::http::field::content_type, "text/plain");
 
-        LOG(INFO) << "Users are:";
-        std::string users = boost::algorithm::join(service_.getUsers(), " ");
-        response.body() = users;
-        LOG(INFO) << users;
-
-        response.prepare_payload();
-
-        // Отправляем ответ
-        return response;
+        json jsonBody = service_.getUsers();
+        return response.version(request.version())
+                       .result(beast::http::status::ok)
+                       .set(beast::http::field::content_type, "text/json")
+                       .body(jsonBody.dump())
+                       .prepare_payload();
     }
 
     ResponseType handleUnexpectedRequest(asio::ip::tcp::socket& socket, beast::http::request<beast::http::string_body> request) {
@@ -123,6 +117,51 @@ public:
         LOG(INFO) << "Generating response for register request!";
         return response.version(request.version())
                        .result(beast::http::status::not_found)
+                       .prepare_payload();
+    }
+
+    ResponseType handleGetNotes(asio::ip::tcp::socket& socket, beast::http::request<beast::http::string_body> request) {
+        ResponseWrapper response;
+
+        LOG(INFO) << "Generating response for GetNotes request!";
+
+        auto&& body = request.body();
+        auto parsedBody = nlohmann::json::parse(body, nullptr, false);
+        if (parsedBody.is_discarded()) {
+            LOG(INFO) << "Generating response for GetNotes request [non JSON]!";
+
+            return response.result(beast::http::status::unprocessable_entity);
+        }
+
+        json jsonBody;
+        std::string userName;
+        uint64_t passwordHashed;
+        try {
+            userName = parsedBody.at("username");
+            passwordHashed = parsedBody.at("password");
+            auto&& notes = service_.getNotesList(userName);
+            jsonBody[userName] = std::vector<std::string>{};
+
+            std::for_each(
+                notes.begin(), notes.end(),
+                [&jsonBody, &userName] (auto note) { jsonBody.at(userName).push_back(note->getText()); }
+            );
+        }
+        catch (json::exception const& err) {
+            LOG(INFO) << "Error: " << err.what();
+
+            return response.result(beast::http::status::bad_request);
+        }
+        catch (std::runtime_error const& err) {
+            LOG(INFO) << "Error: " << err.what();
+
+            return response.result(beast::http::status::bad_request);
+        }
+
+        return response.version(request.version())
+                       .result(beast::http::status::ok)
+                       .set(beast::http::field::content_type, "text/json")
+                       .body(jsonBody.dump())
                        .prepare_payload();
     }
 

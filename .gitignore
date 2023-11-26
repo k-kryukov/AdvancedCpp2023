@@ -9,6 +9,10 @@ build-*
 *.lib
 *.dll
 
+.pytest_cache
+
 *.user
 
 .vscode
+
+__pycache__

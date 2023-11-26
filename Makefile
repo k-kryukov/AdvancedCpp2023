@@ -3,3 +3,6 @@ all:
 
 format:
 	/bin/bash format.bash
+
+test-server:
+	/bin/bash test.bash
