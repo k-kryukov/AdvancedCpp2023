@@ -1,13 +1,31 @@
 #include <QApplication>
+#include <QMainWindow>
+#include <QPushButton>
+#include <QBoxLayout>
+#include <QLabel>
+#include <QLineEdit>
+#include <QTextEdit>
 
-#include "mainwindow.h"
+#include <iostream>
 
-int main(int argc, char *argv[]) {
-  QApplication a(argc, argv);
+int main(int argc, char *argv[])
+{
+    QApplication a(argc, argv);
 
-  MainWindow w;
+    QWidget window;
+    QVBoxLayout *layout = new QVBoxLayout(&window);
 
-  w.show();
+    QTextEdit *textEdit = new QTextEdit(&window);
+    layout->addWidget(textEdit);
 
-  return a.exec();
+    QPushButton *button = new QPushButton("Push me", &window);
+    layout->addWidget(button);
+
+    QObject::connect(button, &QPushButton::clicked, [&]() {
+        std::cout << textEdit->toPlainText().toStdString() << std::endl;
+    });
+
+
+    window.show();
+    return a.exec();
 }
