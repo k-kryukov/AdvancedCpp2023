@@ -16,11 +16,12 @@ namespace beast = boost::beast;
 using namespace nlohmann;
 
 class Server {
+    unsigned port_;
     asio::io_context io_context;
     asio::ip::tcp::acceptor acceptor;
     Handler handler_;
 public:
-    explicit Server(unsigned port) : acceptor{io_context, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port)} {}
+    explicit Server(unsigned port) : port_{port}, acceptor{io_context, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port)} {}
 
     void dispatch(asio::ip::tcp::socket& socket) {
         LOG(INFO) << "Reading request!";
@@ -75,10 +76,11 @@ public:
     }
 
     void start() {
+        // I would like to create Sessions and move socket there
         while (true) {
             asio::ip::tcp::socket socket(io_context);
 
-            LOG(INFO) << "Accepting...";
+            LOG(INFO) << "Accepting on " << port_;
             acceptor.accept(socket);
             LOG(INFO) << "Accepted!";
 
