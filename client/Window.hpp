@@ -14,6 +14,8 @@ class Window {
     LoginWindow loginW;
 
 public:
+    Window() : loginW{&w} {}
+
     void start() {
 
         LOG(INFO) << "Showing widget...";

@@ -10,6 +10,7 @@
 
 #include <concepts>
 #include "Window.hpp"
+#include "Service.hpp"
 #include <glog/logging.h>
 
 #include <iostream>
@@ -22,18 +23,31 @@ class LoginWindow : public QObject {
     QLineEdit userLine;
     QLineEdit passwordLine;
     QPushButton button;
+    Service service;
+    std::hash<std::string> stringHasher;
+    MainWindow* mainWindow;
 
 public:
-    LoginWindow() : loginWidget{}, layout{&loginWidget} {}
+    LoginWindow(MainWindow* mainWindow) : mainWindow{mainWindow}, loginWidget{}, layout{&loginWidget} {}
     virtual ~LoginWindow() {}
 
 private slots:
     void pushButton() {
-        LOG(INFO) << "HELLO!\n";
+        auto resp = service.checkCreds(
+            userLine.text().toStdString(),
+            stringHasher(passwordLine.text().toStdString())
+        );
+
+        if (resp) LOG(INFO) << "Creds are ok!";
+        else LOG(INFO) << "Creds are not ok!";
+
+        if (resp) {
+            loginWidget.hide();
+            mainWindow->show();
+        }
     }
 
 public:
-
     void init() {
         passwordLine.setEchoMode(QLineEdit::Password);
         layout.addWidget(&userLine);
