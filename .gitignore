@@ -7,3 +7,5 @@ build
 *.lib
 *.dll
 
+.vscode
+build
