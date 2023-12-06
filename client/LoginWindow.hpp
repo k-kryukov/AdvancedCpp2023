@@ -9,11 +9,12 @@
 #include <QObject>
 
 #include <concepts>
-#include "Window.hpp"
-#include "Service.hpp"
+#include <iostream>
 #include <glog/logging.h>
 
-#include <iostream>
+#include "Window.hpp"
+#include "Service.hpp"
+#include "Connector.hpp"
 
 class LoginWindow : public QObject {
     // Q_OBJECT
