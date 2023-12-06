@@ -23,6 +23,5 @@ public:
     ResponseWrapper& prepare_payload() { resp.prepare_payload(); return *this; }
 
     operator decltype(resp)() { return resp; }
-
     auto get() { return resp ;}
 };

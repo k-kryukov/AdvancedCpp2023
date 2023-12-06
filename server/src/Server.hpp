@@ -20,6 +20,7 @@ class Server {
     asio::io_context io_context;
     asio::ip::tcp::acceptor acceptor;
     Handler handler_;
+
 public:
     explicit Server(unsigned port) : port_{port}, acceptor{io_context, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port)} {}
 
@@ -84,7 +85,17 @@ public:
             acceptor.accept(socket);
             LOG(INFO) << "Accepted!";
 
-            dispatch(socket);
+            try {
+                dispatch(socket);
+            } catch (std::exception& ex) {
+                LOG(ERROR) << "Caught unexpected error: " << ex.what();
+
+                auto resp = ResponseWrapper{};
+                beast::http::write(
+                    socket,
+                    resp.result(beast::http::status::internal_server_error).get()
+                );
+            }
 
             socket.shutdown(asio::ip::tcp::socket::shutdown_send);
         }

@@ -1,9 +1,12 @@
 #include <utility>
 #include <iostream>
+#include <thread>
 
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
 #include <boost/algorithm/string/join.hpp>
+#include <boost/asio/thread_pool.hpp>
+
 #include <glog/logging.h>
 #include <nlohmann/json.hpp>
 
@@ -17,6 +20,8 @@ using namespace nlohmann;
 
 class Handler {
     Service service_;
+    boost::asio::thread_pool tp_{std::thread::hardware_concurrency()};
+
 public:
     using ResponseType = beast::http::response<beast::http::string_body>;
 
@@ -34,7 +39,15 @@ public:
         try {
             std::string userName = parsedBody.at("username");
             uint64_t passwordHashed = parsedBody.at("password");
-            service_.createUser(userName, passwordHashed);
+
+            if (service_.userExists(userName))
+                return response.result(beast::http::status::bad_request);
+
+            boost::asio::post(
+                tp_, [&service = service_, userName = std::move(userName), passwordHashed] () {
+                    service.createUser(userName, passwordHashed);
+                }
+            );
         }
         catch (json::exception const& err) {
             LOG(INFO) << "Error: " << err.what();
@@ -45,11 +58,6 @@ public:
             LOG(INFO) << "Error: " << err.what();
 
             return response.result(beast::http::status::bad_request);
-        }
-
-        LOG(INFO) << "Users are:";
-        for (auto user : service_.getUsers()) {
-            LOG(INFO) << user;
         }
 
         LOG(INFO) << "Generating response for register request!";
@@ -73,7 +81,14 @@ public:
         try {
             std::string userName = parsedBody.at("username");
             uint64_t passwordHashed = parsedBody.at("password");
-            service_.removeUser(userName, passwordHashed);
+            if (!service_.credsValid(userName, passwordHashed))
+                return response.result(beast::http::status::bad_request);
+
+            boost::asio::post(
+                tp_, [&service = service_, userName = std::move(userName), passwordHashed] () {
+                    service.removeUser(userName, passwordHashed);
+                }
+            );
         }
         catch (json::exception const& err) {
             LOG(INFO) << "Error: " << err.what();
@@ -180,7 +195,14 @@ public:
             std::string userName = parsedBody.at("username");
             uint64_t passwordHashed = parsedBody.at("password");
             std::string noteText = parsedBody.at("noteText");
-            service_.addNote(userName, passwordHashed, std::make_shared<Note>(noteText));
+            if (!service_.credsValid(userName, passwordHashed))
+                return resp.result(beast::http::status::bad_request);
+
+            boost::asio::post(
+                tp_, [&service = service_, userName = std::move(userName), passwordHashed, noteText = std::move(noteText)] () {
+                    service.addNote(userName, passwordHashed, std::make_shared<Note>(noteText));
+                }
+            );
         }
         catch (json::exception const& err) {
             LOG(INFO) << "Error: " << err.what();
@@ -198,6 +220,10 @@ public:
                    .result(beast::http::status::ok)
                    .set(beast::http::field::content_type, "text/plain")
                    .prepare_payload();
+    }
+
+    ~Handler() {
+        tp_.join();
     }
 private:
     ResponseType prepareResponse(beast::http::status status, unsigned version) {
