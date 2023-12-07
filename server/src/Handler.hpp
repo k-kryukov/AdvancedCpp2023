@@ -26,11 +26,12 @@ class Handler {
 
 public:
     using ResponseType = beast::http::response<beast::http::string_body>;
+    using RequestType = beast::http::request<beast::http::string_body>;
 
-    ResponseType handleRegisterRequest(asio::ip::tcp::socket& socket, beast::http::request<beast::http::string_body> request) {
+    ResponseType handleRegisterRequest(asio::ip::tcp::socket& socket, std::shared_ptr<RequestType> request) {
         ResponseWrapper response;
 
-        auto&& body = request.body();
+        auto&& body = request->body();
         auto parsedBody = nlohmann::json::parse(body, nullptr, false);
         if (parsedBody.is_discarded()) {
             LOG(INFO) << "Generating response for register request [non JSON]!";
@@ -63,16 +64,16 @@ public:
         }
 
         LOG(INFO) << "Generating response for register request!";
-        return response.version(request.version())
+        return response.version(request->version())
                        .result(beast::http::status::ok)
                        .set(beast::http::field::content_type, "text/plain")
                        .prepare_payload();
     }
 
-    ResponseType handleRemoveUserRequest(asio::ip::tcp::socket& socket, beast::http::request<beast::http::string_body> request) {
+    ResponseType handleRemoveUserRequest(asio::ip::tcp::socket& socket, std::shared_ptr<RequestType> request) {
         ResponseWrapper response;
 
-        auto&& body = request.body();
+        auto&& body = request->body();
         auto parsedBody = nlohmann::json::parse(body, nullptr, false);
         if (parsedBody.is_discarded()) {
             LOG(INFO) << "Generating response for register request [non JSON]!";
@@ -109,40 +110,40 @@ public:
         }
 
         LOG(INFO) << "Generating response for register request!";
-        return response.version(request.version())
+        return response.version(request->version())
                        .result(beast::http::status::ok)
                        .set(beast::http::field::content_type, "text/plain")
                        .prepare_payload();
     }
 
-    ResponseType handleGetUsers(asio::ip::tcp::socket& socket, beast::http::request<beast::http::string_body> request) {
+    ResponseType handleGetUsers(asio::ip::tcp::socket& socket, std::shared_ptr<RequestType> request) {
         ResponseWrapper response;
 
         LOG(INFO) << "Generating response for register request!";
 
         json jsonBody = service_.getUsers();
-        return response.version(request.version())
+        return response.version(request->version())
                        .result(beast::http::status::ok)
                        .set(beast::http::field::content_type, "text/json")
                        .body(jsonBody.dump())
                        .prepare_payload();
     }
 
-    ResponseType handleUnexpectedRequest(asio::ip::tcp::socket& socket, beast::http::request<beast::http::string_body> request) {
+    ResponseType handleUnexpectedRequest(asio::ip::tcp::socket& socket, std::shared_ptr<RequestType> request) {
         ResponseWrapper response;
 
         LOG(INFO) << "Generating response for register request!";
-        return response.version(request.version())
+        return response.version(request->version())
                        .result(beast::http::status::not_found)
                        .prepare_payload();
     }
 
-    ResponseType handleGetNotes(asio::ip::tcp::socket& socket, beast::http::request<beast::http::string_body> request) {
+    ResponseType handleGetNotes(asio::ip::tcp::socket& socket, std::shared_ptr<RequestType> request) {
         ResponseWrapper response;
 
         LOG(INFO) << "Generating response for GetNotes request!";
 
-        auto&& body = request.body();
+        auto&& body = request->body();
         auto parsedBody = nlohmann::json::parse(body, nullptr, false);
         if (parsedBody.is_discarded()) {
             LOG(INFO) << "Generating response for GetNotes request [non JSON]!";
@@ -175,15 +176,15 @@ public:
             return response.result(beast::http::status::bad_request);
         }
 
-        return response.version(request.version())
+        return response.version(request->version())
                        .result(beast::http::status::ok)
                        .set(beast::http::field::content_type, "text/json")
                        .body(jsonBody.dump())
                        .prepare_payload();
     }
 
-    ResponseType handleNoteCreation(asio::ip::tcp::socket& socket, beast::http::request<beast::http::string_body> request) {
-        auto&& body = request.body();
+    ResponseType handleNoteCreation(asio::ip::tcp::socket& socket, std::shared_ptr<RequestType> request) {
+        auto&& body = request->body();
         auto parsedBody = nlohmann::json::parse(body, nullptr, false);
         ResponseWrapper resp;
 
@@ -218,7 +219,7 @@ public:
         }
 
         LOG(INFO) << "Generating response for register request!";
-        return resp.version(request.version())
+        return resp.version(request->version())
                    .result(beast::http::status::ok)
                    .set(beast::http::field::content_type, "text/plain")
                    .prepare_payload();

@@ -11,9 +11,11 @@
 namespace asio = boost::asio;
 namespace beast = boost::beast;
 
-class Session {
+class Session : public std::enable_shared_from_this<Session> {
     asio::ip::tcp::socket socket_;
     Handler& handler_;
+
+    using RequestType = beast::http::request<beast::http::string_body>;
 
 public:
     Session(asio::ip::tcp::socket socket, Handler& handler)
@@ -36,32 +38,35 @@ public:
 
     void dispatch() {
         LOG(INFO) << "Reading request!";
-        beast::flat_buffer buffer;
-        beast::http::request<beast::http::string_body> request;
-        beast::http::read(socket_, buffer, request);
-        LOG(INFO) << "Request->target is " << request.target();
+        auto buffer = std::make_shared<beast::flat_buffer>();
+        auto request = std::make_shared<beast::http::request<beast::http::string_body>>();
 
-        auto&& tgt = request.target();
-        if (tgt == "/users")
-            beast::http::write(socket_, dispatchUsers(std::move(request)));
-        else if (tgt == "/notes") {
-            beast::http::write(socket_, dispatchNotes(std::move(request)));
-        }
-        else {
-            beast::http::write(socket_, handler_.handleUnexpectedRequest(socket_, std::move(request)));
-        }
+        beast::http::async_read(socket_, *buffer, *request,
+            [self = shared_from_this(), buffer, request] (auto err, auto cnt) {
+                LOG(INFO) << "Request->target is " << request->target();
+
+                auto&& tgt = request->target();
+                if (tgt == "/users")
+                    beast::http::write(self->socket_, self->dispatchUsers(request));
+                else if (tgt == "/notes") {
+                    beast::http::write(self->socket_, self->dispatchNotes(request));
+                }
+                else
+                    beast::http::write(self->socket_, self->handler_.handleUnexpectedRequest(self->socket_, std::move(request)));
+            }
+        );
     }
 
-    Handler::ResponseType dispatchUsers(beast::http::request<beast::http::string_body> request) {
-        if (request.method() == boost::beast::http::verb::post) {
+    Handler::ResponseType dispatchUsers(std::shared_ptr<RequestType> request) {
+        if (request->method() == boost::beast::http::verb::post) {
             auto resp = handler_.handleRegisterRequest(socket_, std::move(request));
             return resp;
         }
-        else if (request.method() == boost::beast::http::verb::get) {
+        else if (request->method() == boost::beast::http::verb::get) {
             auto resp = handler_.handleGetUsers(socket_, std::move(request));
             return resp;
         }
-        else if (request.method() == boost::beast::http::verb::delete_) {
+        else if (request->method() == boost::beast::http::verb::delete_) {
             auto resp = handler_.handleRemoveUserRequest(socket_, std::move(request));
             return resp;
         }
@@ -71,12 +76,12 @@ public:
         }
     }
 
-    Handler::ResponseType dispatchNotes(beast::http::request<beast::http::string_body> request) {
-        if (request.method() == boost::beast::http::verb::post) {
+    Handler::ResponseType dispatchNotes(std::shared_ptr<RequestType> request) {
+        if (request->method() == boost::beast::http::verb::post) {
             auto resp = handler_.handleNoteCreation(socket_, std::move(request));
             return resp;
         }
-        else if (request.method() == boost::beast::http::verb::get) {
+        else if (request->method() == boost::beast::http::verb::get) {
             auto resp = handler_.handleGetNotes(socket_, std::move(request));
             return resp;
         }
