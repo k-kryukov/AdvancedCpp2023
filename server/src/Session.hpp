@@ -52,16 +52,18 @@ public:
 
                 auto&& tgt = request->target();
 
-                auto resp = (tgt == "/users") ?
-                                self->dispatchUsers(request)
-                            : (tgt == "/notes") ?
-                                self->dispatchNotes(request)
-                            :
-                                self->handler_.handleUnexpectedRequest(self->socket_, request)
-                ;
+                auto resp = std::make_shared<Handler::ResponseType>(
+                    (tgt == "/users") ?
+                        self->dispatchUsers(request)
+                    : (tgt == "/notes") ?
+                        self->dispatchNotes(request)
+                    :
+                        self->handler_.handleUnexpectedRequest(self->socket_, request)
+                );
 
-                beast::http::write(self->socket_, std::move(resp));
-                self->dispatch();
+                beast::http::async_write(self->socket_, *resp,
+                    [resp, self] (auto err, auto bytes_transferred) { self->dispatch(); }
+                );
             }
         );
     }
