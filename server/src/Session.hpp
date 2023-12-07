@@ -43,16 +43,25 @@ public:
 
         beast::http::async_read(socket_, *buffer, *request,
             [self = shared_from_this(), buffer, request] (auto err, auto cnt) {
+                constexpr auto eof = 1;
+                if (err.value() == eof) {
+                    LOG(INFO) << "Socket is closed!"; return;
+                }
+
                 LOG(INFO) << "Request->target is " << request->target();
 
                 auto&& tgt = request->target();
-                if (tgt == "/users")
-                    beast::http::write(self->socket_, self->dispatchUsers(request));
-                else if (tgt == "/notes") {
-                    beast::http::write(self->socket_, self->dispatchNotes(request));
-                }
-                else
-                    beast::http::write(self->socket_, self->handler_.handleUnexpectedRequest(self->socket_, std::move(request)));
+
+                auto resp = (tgt == "/users") ?
+                                self->dispatchUsers(request)
+                            : (tgt == "/notes") ?
+                                self->dispatchNotes(request)
+                            :
+                                self->handler_.handleUnexpectedRequest(self->socket_, request)
+                ;
+
+                beast::http::write(self->socket_, std::move(resp));
+                self->dispatch();
             }
         );
     }
