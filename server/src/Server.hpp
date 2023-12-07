@@ -9,6 +9,7 @@
 
 #include "Service.hpp"
 #include "Handler.hpp"
+#include "Session.hpp"
 
 namespace asio = boost::asio;
 namespace beast = boost::beast;
@@ -20,9 +21,13 @@ class Server {
     asio::io_context io_context;
     asio::ip::tcp::acceptor acceptor;
     Handler handler_;
+    asio::ip::tcp::socket socket_;
 
 public:
-    explicit Server(unsigned port) : port_{port}, acceptor{io_context, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port)} {}
+    explicit Server(unsigned port)
+        : port_{port}, acceptor{io_context, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port)}, socket_{io_context} {}
+
+    void start_ctx() { io_context.run(); }
 
     void dispatch(asio::ip::tcp::socket& socket) {
         LOG(INFO) << "Reading request!";
@@ -77,27 +82,27 @@ public:
     }
 
     void start() {
-        // I would like to create Sessions and move socket there
-        while (true) {
-            asio::ip::tcp::socket socket(io_context);
+        socket_ = asio::ip::tcp::socket{io_context};
 
-            LOG(INFO) << "Accepting on " << port_;
-            acceptor.accept(socket);
+        // I would like to create Sessions and move socket there
+        LOG(INFO) << "Accepting on " << port_;
+        acceptor.async_accept(socket_, [this] (auto err) {
             LOG(INFO) << "Accepted!";
 
             try {
-                dispatch(socket);
+                dispatch(socket_);
             } catch (std::exception& ex) {
                 LOG(ERROR) << "Caught unexpected error: " << ex.what();
 
                 auto resp = ResponseWrapper{};
                 beast::http::write(
-                    socket,
+                    socket_,
                     resp.result(beast::http::status::internal_server_error).get()
                 );
             }
 
-            socket.shutdown(asio::ip::tcp::socket::shutdown_send);
-        }
+            LOG(INFO) << "Recursive call!";
+            start();
+        });
     }
 };

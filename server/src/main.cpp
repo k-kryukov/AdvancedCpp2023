@@ -8,6 +8,7 @@ int main(int argc, char** argv) {
 
 	Server server{12345};
 	server.start();
+    server.start_ctx();
 
     return 0;
 }
