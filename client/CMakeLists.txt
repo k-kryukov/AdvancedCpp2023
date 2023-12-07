@@ -44,7 +44,7 @@ else()
     endif()
 endif()
 
-target_link_libraries(client PRIVATE Qt${QT_VERSION_MAJOR}::Widgets glog::glog)
+target_link_libraries(client PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Network glog::glog)
 
 set_target_properties(client PROPERTIES
     MACOSX_BUNDLE_GUI_IDENTIFIER my.example.com

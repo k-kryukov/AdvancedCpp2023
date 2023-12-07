@@ -7,6 +7,10 @@ build
 *.lib
 *.dll
 
+*build*
+
+.idea
+
 .vscode
 build
 __pycache__

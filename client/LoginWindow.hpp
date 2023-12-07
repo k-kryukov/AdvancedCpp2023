@@ -14,7 +14,6 @@
 
 #include "Window.hpp"
 #include "Service.hpp"
-#include "Connector.hpp"
 
 class LoginWindow : public QObject {
     // Q_OBJECT
@@ -36,7 +35,7 @@ private slots:
     void pushButton() {
         auto resp = service.checkCreds(
             userLine.text().toStdString(),
-            stringHasher(passwordLine.text().toStdString())
+            passwordLine.text().toStdString()
         );
 
         if (resp) LOG(INFO) << "Creds are ok!";
