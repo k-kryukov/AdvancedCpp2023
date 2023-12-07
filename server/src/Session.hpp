@@ -13,11 +13,26 @@ namespace beast = boost::beast;
 
 class Session {
     asio::ip::tcp::socket socket_;
-    Handler handler_;
+    Handler& handler_;
 
 public:
-    Session(asio::ip::tcp::socket socket)
-        : socket_{std::move(socket)} {}
+    Session(asio::ip::tcp::socket socket, Handler& handler)
+        : socket_{std::move(socket)}, handler_{handler} {}
+
+    void handle() {
+        try {
+            dispatch();
+        } catch (std::exception& ex) {
+            LOG(ERROR) << "Caught unexpected error: " << ex.what();
+
+            auto resp = ResponseWrapper{};
+            beast::http::write(
+                socket_,
+                resp.result(beast::http::status::internal_server_error).get()
+            );
+        }
+
+    }
 
     void dispatch() {
         LOG(INFO) << "Reading request!";
