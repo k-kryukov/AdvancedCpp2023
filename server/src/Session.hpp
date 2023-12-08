@@ -1,5 +1,7 @@
 #pragma once
 
+#include <regex>
+
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
 #include <boost/algorithm/string/join.hpp>
@@ -57,12 +59,14 @@ public:
                         self->dispatchUsers(request)
                     : (tgt == "/notes") ?
                         self->dispatchNotes(request)
+                    : (std::regex_search(tgt.data(), std::regex{"/validate-creds\?.+"})) ?
+                        self->dispatchValidateCreds(request)
                     :
                         self->handler_.handleUnexpectedRequest(self->socket_, request)
                 );
 
                 beast::http::async_write(self->socket_, *resp,
-                    [resp, self] (auto err, auto bytes_transferred) { self->dispatch(); }
+                    [resp, self] (auto err, auto bytes_transferred) { /* self->dispatch(); */ }
                 );
             }
         );
@@ -94,6 +98,18 @@ public:
         }
         else if (request->method() == boost::beast::http::verb::get) {
             auto resp = handler_.handleGetNotes(socket_, std::move(request));
+            return resp;
+        }
+        else {
+            auto resp = handler_.handleUnexpectedRequest(socket_, std::move(request));
+            return resp;
+        }
+    }
+
+    Handler::ResponseType dispatchValidateCreds(std::shared_ptr<RequestType> request) {
+        LOG(INFO) << "Dispatching validate creds";
+        if (request->method() == boost::beast::http::verb::get) {
+            auto resp = handler_.handleValidateCreds(socket_, std::move(request));
             return resp;
         }
         else {

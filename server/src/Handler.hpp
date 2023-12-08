@@ -3,6 +3,7 @@
 #include <utility>
 #include <iostream>
 #include <thread>
+#include <unordered_map>
 
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
@@ -19,6 +20,41 @@ namespace asio = boost::asio;
 namespace beast = boost::beast;
 
 using namespace nlohmann;
+
+
+std::unordered_map<std::string, std::string> parseQueryParams(const std::string& url) {
+    std::unordered_map<std::string, std::string> params;
+
+    size_t position = url.find("?");
+    if (position != std::string::npos) {
+        std::string query = url.substr(position + 1);
+        std::string key, value;
+        LOG(INFO) << "Query is " << query;
+
+        size_t pos = 0;
+        while ((pos = query.find("&")) != std::string::npos) {
+            std::string pair = query.substr(0, pos);
+            size_t eqPos = pair.find("=");
+            if (eqPos != std::string::npos) {
+                key = pair.substr(0, eqPos);
+                value = pair.substr(eqPos + 1);
+                LOG(INFO) << "Inserted value is " << value;
+                params[key] = value;
+            }
+            query.erase(0, pos + 1);
+        }
+
+        size_t eqPos = query.find("=");
+        if (eqPos != std::string::npos) {
+            key = query.substr(0, eqPos);
+            value = query.substr(eqPos + 1);
+            LOG(INFO) << "Inserted value is " << value;
+            params[key] = value;
+        }
+    }
+
+    return params;
+}
 
 class Handler {
     Service service_;
@@ -41,7 +77,7 @@ public:
 
         try {
             std::string userName = parsedBody.at("username");
-            uint64_t passwordHashed = parsedBody.at("password");
+            std::string passwordHashed = parsedBody.at("password");
 
             if (service_.userExists(userName))
                 return response.result(beast::http::status::bad_request);
@@ -83,7 +119,7 @@ public:
 
         try {
             std::string userName = parsedBody.at("username");
-            uint64_t passwordHashed = parsedBody.at("password");
+            std::string passwordHashed = parsedBody.at("password");
             if (!service_.credsValid(userName, passwordHashed))
                 return response.result(beast::http::status::bad_request);
 
@@ -100,6 +136,46 @@ public:
         }
         catch (std::runtime_error const& err) {
             LOG(INFO) << "Error: " << err.what();
+
+            return response.result(beast::http::status::bad_request);
+        }
+
+        LOG(INFO) << "Users are:";
+        for (auto user : service_.getUsers()) {
+            LOG(INFO) << user;
+        }
+
+        LOG(INFO) << "Generating response for register request!";
+        return response.version(request->version())
+                       .result(beast::http::status::ok)
+                       .set(beast::http::field::content_type, "text/plain")
+                       .prepare_payload();
+    }
+
+    ResponseType handleValidateCreds(asio::ip::tcp::socket& socket, std::shared_ptr<RequestType> request) {
+        ResponseWrapper response;
+
+        auto&& tgt = request->target().to_string();
+
+        LOG(INFO) << "Parsing query params";
+        LOG(INFO) << "URL is " << tgt;
+        try {
+            auto queryParams = parseQueryParams(tgt);
+
+            std::string userName = queryParams.at("username");
+            std::string password = queryParams.at("password");
+            LOG(INFO) << "Username is " << userName << ", password is " << password;
+            LOG(INFO) << "Password len is " << password.length();
+            if (!service_.credsValid(userName, password))
+                return response.result(beast::http::status::not_found);
+        }
+        catch (std::out_of_range const& err) {
+            LOG(ERROR) << "Error: " << err.what();
+
+            return response.result(beast::http::status::bad_request);
+        }
+        catch (std::runtime_error const& err) {
+            LOG(ERROR) << "Error: " << err.what();
 
             return response.result(beast::http::status::bad_request);
         }
@@ -153,7 +229,7 @@ public:
 
         json jsonBody;
         std::string userName;
-        uint64_t passwordHashed;
+        std::string passwordHashed;
         try {
             userName = parsedBody.at("username");
             passwordHashed = parsedBody.at("password");
@@ -196,7 +272,7 @@ public:
 
         try {
             std::string userName = parsedBody.at("username");
-            uint64_t passwordHashed = parsedBody.at("password");
+            std::string passwordHashed = parsedBody.at("password");
             std::string noteText = parsedBody.at("noteText");
             if (!service_.credsValid(userName, passwordHashed))
                 return resp.result(beast::http::status::bad_request);

@@ -11,11 +11,11 @@ TEST(Foo, ServiceUsersTests) {
 	Service service;
 	auto users = std::vector{"@krecov", "username"};
 
-    uint64_t pswdHash = 11111111111111111111ull;
+    std::string pswdHash = "11111111111111111111";
 	service.createUser(users.at(0), pswdHash);
 	service.createUser(users.at(1), pswdHash);
 
-    uint64_t wrongPassword = 11111111111211111111ull;
+    std::string wrongPassword = "11111111111211111111";
     ASSERT_THROW(
         service.removeUser(users.at(0), wrongPassword),
         std::runtime_error

@@ -14,7 +14,7 @@
 #include "UserData.hpp"
 
 class Service {
-    std::unordered_map<std::string, uint64_t> users; // username -> pwd hash
+    std::unordered_map<std::string, std::string> users; // username -> pwd hash
     std::unordered_map<std::string, std::shared_ptr<UserData>> userData;
     std::shared_mutex mtx_;
     // mutex is shared_mutex here just for future enhancements
@@ -25,7 +25,7 @@ public:
     Service(Service const&) = delete;
     Service(Service &&) = default;
 
-    void createUser(std::string const& userName, uint64_t pswdHash) {
+    void createUser(std::string const& userName, std::string pswdHash) {
         std::unique_lock lock{mtx_};
         checkUserNonExistance(userName);
 
@@ -41,7 +41,7 @@ public:
         return usersList;
     }
 
-    void removeUser(std::string const& userName, uint64_t pswdHash) {
+    void removeUser(std::string const& userName, std::string pswdHash) {
         std::unique_lock lock{mtx_};
         checkUserCreds(userName, pswdHash);
 
@@ -49,7 +49,7 @@ public:
         userData.erase(userName);
     }
 
-    uint64_t addNote(std::string const& userName, uint64_t pswdHash, std::shared_ptr<Note> note) {
+    uint64_t addNote(std::string const& userName, std::string pswdHash, std::shared_ptr<Note> note) {
         std::unique_lock lock{mtx_};
         checkUserExistance(userName);
 
@@ -80,9 +80,14 @@ public:
         return true;
     }
 
-    bool credsValid(std::string const& userName, uint64_t pswdHash) {
+    bool credsValid(std::string const& userName, std::string const& pswdHash) {
         std::shared_lock lock{mtx_};
-        return userExists(userName) && pswdHash == users[userName];
+        auto res = userExists(userName) && pswdHash == users[userName];
+
+        if (userExists(userName))
+            LOG(INFO) << "Real password is " << users[userName];
+
+        return res;
     }
 
 private:
@@ -104,7 +109,7 @@ private:
         }
     }
 
-    void checkUserCreds(std::string const& userName, uint64_t pswdHash) {
+    void checkUserCreds(std::string const& userName, std::string pswdHash) {
         checkUserExistance(userName);
 
         if (pswdHash != users[userName]) {

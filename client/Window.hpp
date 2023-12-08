@@ -22,7 +22,7 @@ public:
         loginW.init();
     }
 
-    void tryLogin(std::string login, uint64_t hashedPassword) {
+    void tryLogin(std::string login, std::string hashedPassword) {
         LOG(INFO) << "Login is " << login << ", pass is " << hashedPassword;
     }
 };
