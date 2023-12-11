@@ -42,11 +42,15 @@ public:
         window.setLayout(&layout);
         window.setFixedSize(800, 800);
 
+        fetchNotesFromServer();
+
         QObject::connect(&button, &QPushButton::clicked, this, &MainWindow::exitButtonPushed);
     }
 
     void show() { window.show(); }
 
 private:
-    void f() {}
+    void fetchNotesFromServer() {
+        auto notes = service.getNotes(currentUser_, currentPassword_);
+    }
 };

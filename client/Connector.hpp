@@ -49,7 +49,7 @@ public:
         return resp->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() / 100 == 2;
     }
 
-    bool getNotes(std::string const& username, std::string const& passwordHash) {
+    auto getNotes(std::string const& username, std::string const& passwordHash) {
         QNetworkRequest request;
         QUrlQuery query;
 
@@ -73,7 +73,22 @@ public:
         }
         LOG(INFO) << "Status: " << resp->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
 
-        return resp->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() / 100 == 2;
+        auto success = resp->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() / 100 == 2;
+        if (!success) {
+            LOG(ERROR) << "HTTP status code: " << resp->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+            return std::vector<std::string>{};
+        }
+
+        QByteArray reply = resp->readAll();
+        QJsonDocument document = QJsonDocument::fromJson(reply);
+        QJsonObject rootObj = document.object();
+
+        LOG(INFO) << "Dumping notes...";
+        for (auto key : rootObj) {
+            LOG(INFO) << key.toString().toStdString();
+        }
+
+        return std::vector<std::string>{};
     }
 
     bool createNewUser(std::string const& username, std::string const& password) {

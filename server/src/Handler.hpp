@@ -217,45 +217,47 @@ public:
     ResponseType handleGetNotes(asio::ip::tcp::socket& socket, std::shared_ptr<RequestType> request) {
         ResponseWrapper response;
 
-        LOG(INFO) << "Generating response for GetNotes request!";
+        auto&& tgt = request->target().to_string();
 
-        auto&& body = request->body();
-        auto parsedBody = nlohmann::json::parse(body, nullptr, false);
-        if (parsedBody.is_discarded()) {
-            LOG(INFO) << "Generating response for GetNotes request [non JSON]!";
-
-            return response.result(beast::http::status::unprocessable_entity);
-        }
-
-        json jsonBody;
-        std::string userName;
-        std::string passwordHashed;
+        LOG(INFO) << "Parsing query params";
+        LOG(INFO) << "URL is " << tgt;
         try {
-            userName = parsedBody.at("username");
-            passwordHashed = parsedBody.at("password");
+            auto queryParams = parseQueryParams(tgt);
+
+            std::string userName = queryParams.at("username");
+            std::string password = queryParams.at("password");
+            LOG(INFO) << "Username is " << userName << ", password is " << password;
+            LOG(INFO) << "Password len is " << password.length();
+
+            json respBody;
             auto&& notes = service_.getNotesList(userName);
-            jsonBody[userName] = std::vector<std::string>{};
+            respBody[userName] = std::vector<std::string>{};
 
             std::for_each(
                 notes.begin(), notes.end(),
-                [&jsonBody, &userName] (auto note) { jsonBody.at(userName).push_back(note->getText()); }
+                [&respBody, &userName] (auto note) { respBody[userName].push_back(note->getText()); }
             );
         }
-        catch (json::exception const& err) {
-            LOG(INFO) << "Error: " << err.what();
+        catch (std::out_of_range const& err) {
+            LOG(ERROR) << "Error: " << err.what();
 
             return response.result(beast::http::status::bad_request);
         }
         catch (std::runtime_error const& err) {
-            LOG(INFO) << "Error: " << err.what();
+            LOG(ERROR) << "Error: " << err.what();
 
             return response.result(beast::http::status::bad_request);
         }
 
+        LOG(INFO) << "Users are:";
+        for (auto user : service_.getUsers()) {
+            LOG(INFO) << user;
+        }
+
+        LOG(INFO) << "Generating response for register request!";
         return response.version(request->version())
                        .result(beast::http::status::ok)
-                       .set(beast::http::field::content_type, "text/json")
-                       .body(jsonBody.dump())
+                       .set(beast::http::field::content_type, "text/plain")
                        .prepare_payload();
     }
 

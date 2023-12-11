@@ -1,4 +1,4 @@
-#include "mainwindow.h"
+#include "MainWindow.hpp"
 #include "Window.hpp"
 #include "glog/logging.h"
 

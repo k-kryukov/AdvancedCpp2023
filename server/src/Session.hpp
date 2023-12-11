@@ -57,7 +57,7 @@ public:
                 auto resp = std::make_shared<Handler::ResponseType>(
                     (tgt == "/users") ?
                         self->dispatchUsers(request)
-                    : (tgt == "/notes") ?
+                    : (std::regex_search(tgt.data(), std::regex{"/notes\?.+"})) ?
                         self->dispatchNotes(request)
                     : (std::regex_search(tgt.data(), std::regex{"/validate-creds\?.+"})) ?
                         self->dispatchValidateCreds(request)
