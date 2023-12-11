@@ -42,11 +42,21 @@ private slots:
             passwordLine.text().toStdString()
         );
 
-        if (resp) LOG(INFO) << "Creds are ok!";
-        else LOG(INFO) << "Creds are not ok!";
+        if (!resp){
+            LOG(INFO) << "Creds are not ok!";
+            QMessageBox messageBox;
+            messageBox.setFixedSize(500,200);
+            messageBox.critical(0, "Error", "Wrong creds");
+        }
 
         if (resp) {
+            LOG(INFO) << "Creds are ok!";
             loginWidget.hide();
+
+            mainWindow->init(
+                userLine.text().toStdString(),
+                passwordLine.text().toStdString()
+            );
             mainWindow->show();
         }
     }
@@ -70,6 +80,7 @@ public:
 
         loginWidget.setWindowTitle("Login");
 
+        loginWidget.setFixedSize(600, 600);
         loginWidget.show();
 
         QObject::connect(&button, &QPushButton::clicked, this, &LoginWindow::pushButton);

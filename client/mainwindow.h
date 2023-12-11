@@ -1,45 +1,48 @@
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+#pragma once
 
 #include <QMainWindow>
 #include <QWidget>
 #include <QBoxLayout>
 #include <QLineEdit>
 #include <QMessageBox>
+#include <QPushButton>
 
 #include <glog/logging.h>
 
-QT_BEGIN_NAMESPACE
-namespace Ui { class MainWindow; }
-QT_END_NAMESPACE
+#include "Service.hpp"
 
-class MainWindow : public QMainWindow
+class MainWindow : public QObject
 {
-    Q_OBJECT
-
-public:
-    MainWindow(QWidget *parent = nullptr);
-    ~MainWindow();
-
-    void openLoginWindow() {
-        QWidget loginWidget;
-        QVBoxLayout layout(&loginWidget);
-        QLineEdit userLine;
-        layout.addWidget(&userLine);
-        QLineEdit passwordLine;
-        passwordLine.setEchoMode(QLineEdit::Password);
-        layout.addWidget(&passwordLine);
-        loginWidget.setWindowTitle("Login");
-
-        loginWidget.show();
-
-        hide();
-    }
+    QPushButton button;
+    QVBoxLayout layout;
+    QWidget window;
+    Service service;
+    std::string currentUser_;
+    std::string currentPassword_;
 
 private slots:
-    void on_pushButton_clicked();
+    void exitButtonPushed() {
+        LOG(INFO) << "Exit button is pushed!";
+        window.hide();
+        ::exit(0);
+    }
 
-private:
-    Ui::MainWindow *ui;
+public:
+    MainWindow() {}
+
+    void init(std::string username, std::string password) {
+        currentUser_ = std::move(username);
+        currentPassword_ = std::move(password);
+
+        layout.addWidget(&button);
+        button.setObjectName("pushButton");
+        button.setText("Exit");
+
+        window.setLayout(&layout);
+        window.setFixedSize(800, 800);
+
+        QObject::connect(&button, &QPushButton::clicked, this, &MainWindow::exitButtonPushed);
+    }
+
+    void show() { window.show(); }
 };
-#endif // MAINWINDOW_H

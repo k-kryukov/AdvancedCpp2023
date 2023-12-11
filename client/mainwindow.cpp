@@ -1,23 +1,23 @@
 #include <iostream>
 
 #include "mainwindow.h"
-#include "./ui_mainwindow.h"
+// #include "./ui_mainwindow.h"
 
-MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent)
-    , ui(new Ui::MainWindow)
-{
-    ui->setupUi(this);
-}
+// MainWindow::MainWindow(QWidget *parent)
+//     : QMainWindow(parent)
+//     , ui(new Ui::MainWindow)
+// {
+//     ui->setupUi(this);
+// }
 
-MainWindow::~MainWindow()
-{
-    delete ui;
-}
+// MainWindow::~MainWindow()
+// {
+//     delete ui;
+// }
 
 
-void MainWindow::on_pushButton_clicked()
-{
-    std::cout << "Button has been pushed!\n";
-}
+// void MainWindow::on_pushButton_clicked()
+// {
+//     std::cout << "Button has been pushed!\n";
+// }
 

@@ -28,7 +28,7 @@ public:
     RegisterWindow() : registerWidget{} { init(); }
     virtual ~RegisterWindow() {}
 
-    void show() { registerWidget.show(); }
+    void show() { registerWidget.setFixedSize(600, 600); registerWidget.show(); }
 
 private slots:
     void pushButton() {
@@ -38,9 +38,9 @@ private slots:
         QMessageBox messageBox;
         messageBox.setFixedSize(500,200);
         if (!res)
-            messageBox.critical(0, "Error", "An error has occured !");
+            messageBox.critical(&registerWidget, "Error", "An error has occured: usually it means that user already exists!");
         else
-            messageBox.information(0, "OK!", "");
+            messageBox.information(&registerWidget, "OK!", "");
     }
 
 public:
