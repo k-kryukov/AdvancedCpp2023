@@ -22,4 +22,8 @@ public:
     bool createUser(std::string username, std::string const& passwd) {
         return conn.createNewUser(std::move(username), passwd);
     }
+
+    auto getNotes(std::string username, std::string const& passwd) {
+        return conn.getNotes(std::move(username), passwd);
+    }
 };

@@ -1,12 +1,12 @@
 #pragma once
 
+#include <vector>
 #include <QMainWindow>
 #include <QWidget>
 #include <QBoxLayout>
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QPushButton>
-
 #include <glog/logging.h>
 
 #include "Service.hpp"
@@ -19,6 +19,7 @@ class MainWindow : public QObject
     Service service;
     std::string currentUser_;
     std::string currentPassword_;
+    std::vector<std::string> notes_;
 
 private slots:
     void exitButtonPushed() {
@@ -45,4 +46,7 @@ public:
     }
 
     void show() { window.show(); }
+
+private:
+    void f() {}
 };
