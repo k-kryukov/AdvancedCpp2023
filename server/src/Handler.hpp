@@ -112,7 +112,7 @@ public:
         auto&& body = request->body();
         auto parsedBody = nlohmann::json::parse(body, nullptr, false);
         if (parsedBody.is_discarded()) {
-            LOG(INFO) << "Generating response for register request [non JSON]!";
+            LOG(INFO) << "Generating response for remove request [non JSON]!";
 
             return response.result(beast::http::status::unprocessable_entity);
         }
@@ -145,7 +145,7 @@ public:
             LOG(INFO) << user;
         }
 
-        LOG(INFO) << "Generating response for register request!";
+        LOG(INFO) << "Generating response for remove request!";
         return response.version(request->version())
                        .result(beast::http::status::ok)
                        .set(beast::http::field::content_type, "text/plain")
@@ -185,7 +185,7 @@ public:
             LOG(INFO) << user;
         }
 
-        LOG(INFO) << "Generating response for register request!";
+        LOG(INFO) << "Generating response for validate creds request!";
         return response.version(request->version())
                        .result(beast::http::status::ok)
                        .set(beast::http::field::content_type, "text/plain")
@@ -195,7 +195,7 @@ public:
     ResponseType handleGetUsers(asio::ip::tcp::socket& socket, std::shared_ptr<RequestType> request) {
         ResponseWrapper response;
 
-        LOG(INFO) << "Generating response for register request!";
+        LOG(INFO) << "Generating response for get users request!";
 
         json jsonBody = service_.getUsers();
         return response.version(request->version())
@@ -208,7 +208,7 @@ public:
     ResponseType handleUnexpectedRequest(asio::ip::tcp::socket& socket, std::shared_ptr<RequestType> request) {
         ResponseWrapper response;
 
-        LOG(INFO) << "Generating response for register request!";
+        LOG(INFO) << "Generating response for unexpected request!";
         return response.version(request->version())
                        .result(beast::http::status::not_found)
                        .prepare_payload();
@@ -218,6 +218,7 @@ public:
         ResponseWrapper response;
 
         auto&& tgt = request->target().to_string();
+        json respBody;
 
         LOG(INFO) << "Parsing query params";
         LOG(INFO) << "URL is " << tgt;
@@ -229,7 +230,6 @@ public:
             LOG(INFO) << "Username is " << userName << ", password is " << password;
             LOG(INFO) << "Password len is " << password.length();
 
-            json respBody;
             auto&& notes = service_.getNotesList(userName);
             respBody[userName] = std::vector<std::string>{};
 
@@ -237,6 +237,11 @@ public:
                 notes.begin(), notes.end(),
                 [&respBody, &userName] (auto note) { respBody[userName].push_back(note->getText()); }
             );
+
+            LOG(INFO) << "Printing notes...";
+            for (auto note : respBody[userName]) {
+                LOG(INFO) << note;
+            }
         }
         catch (std::out_of_range const& err) {
             LOG(ERROR) << "Error: " << err.what();
@@ -254,10 +259,11 @@ public:
             LOG(INFO) << user;
         }
 
-        LOG(INFO) << "Generating response for register request!";
+        LOG(INFO) << "Generating response for get notes request!";
         return response.version(request->version())
                        .result(beast::http::status::ok)
-                       .set(beast::http::field::content_type, "text/plain")
+                       .set(beast::http::field::content_type, "text/json")
+                       .body(respBody.dump())
                        .prepare_payload();
     }
 
@@ -267,7 +273,7 @@ public:
         ResponseWrapper resp;
 
         if (parsedBody.is_discarded()) {
-            LOG(INFO) << "Generating response for register request [non JSON]!";
+            LOG(INFO) << "Generating response for note creation request [non JSON]!";
 
             return resp.result(beast::http::status::unprocessable_entity);
         }
@@ -296,7 +302,7 @@ public:
             return resp.result(beast::http::status::bad_request);
         }
 
-        LOG(INFO) << "Generating response for register request!";
+        LOG(INFO) << "Generating response for note creation request!";
         return resp.version(request->version())
                    .result(beast::http::status::ok)
                    .set(beast::http::field::content_type, "text/plain")

@@ -35,7 +35,6 @@ public:
                 resp.result(beast::http::status::internal_server_error).get()
             );
         }
-
     }
 
     void dispatch() {
