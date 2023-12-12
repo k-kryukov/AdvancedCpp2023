@@ -14,12 +14,12 @@
 
 #include "Service.hpp"
 
-class CreateNoteWindow : public QObject {
+class RemoveNoteWindow : public QObject {
     // Q_OBJECT
 
     QWidget widget;
     QVBoxLayout layout;
-    QLineEdit noteText;
+    QLineEdit noteNumberText;
     QPushButton button;
 
     std::string username_;
@@ -31,31 +31,32 @@ class CreateNoteWindow : public QObject {
     // RegisterWindow registerWindow;
 
 public:
-    CreateNoteWindow(std::string username, std::string password)
+    RemoveNoteWindow(std::string username, std::string password)
         : username_{username}, password_{password} {}
-    virtual ~CreateNoteWindow() {}
+    virtual ~RemoveNoteWindow() {}
 
 private slots:
     void pushButton() {
-        auto text = noteText.text().toStdString();
+        auto text = noteNumberText.text().toStdString();
 
-        service.createNote(username_, password_, text);
+        service.removeNote(username_, password_, std::stoi(text));
 
         widget.hide();
     }
 
 public:
     void init() {
-        layout.addWidget(&noteText);
+        layout.addWidget(&noteNumberText);
         layout.addWidget(&button);
+        noteNumberText.setText("Note number");
 
         button.setText("Submit");
 
-        widget.setWindowTitle("New note");
+        widget.setWindowTitle("Remove note");
         widget.setFixedSize(600, 600);
         widget.setLayout(&layout);
 
-        QObject::connect(&button, &QPushButton::clicked, this, &CreateNoteWindow::pushButton);
+        QObject::connect(&button, &QPushButton::clicked, this, &RemoveNoteWindow::pushButton);
     }
 
     void show() { widget.show(); }

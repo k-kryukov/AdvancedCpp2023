@@ -152,4 +152,31 @@ public:
 
         return resp->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() / 100 == 2;
     }
+
+    bool removeNote(std::string const& username, std::string const& password, unsigned num) {
+        QNetworkRequest request;
+        QUrlQuery query;
+
+        QUrl url = url_.toString() + QString{"/notes"};
+
+        query.addQueryItem("username", username.data());
+        query.addQueryItem("password", password.data());
+        query.addQueryItem("note", std::to_string(num).data());
+
+        url.setQuery(query.query());
+        LOG(INFO) << url.toString().toStdString();
+        request.setUrl(url);
+
+        auto resp = manager.deleteResource(request);
+        QEventLoop loop;
+        QObject::connect(resp, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+        loop.exec();
+
+        if (resp->error() != 0)
+            LOG(ERROR) << "Error: " << resp->errorString().toStdString();
+
+        LOG(INFO) << "Status: " << resp->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+
+        return resp->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() / 100 == 2;
+    }
 };

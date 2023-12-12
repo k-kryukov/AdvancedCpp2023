@@ -75,9 +75,6 @@ private slots:
     }
 
     void addNoteButtonPushed() {
-        createNoteWindow = new CreateNoteWindow{currentUser_, currentPassword_};
-
-        createNoteWindow->init();
         createNoteWindow->show();
     }
 
@@ -85,6 +82,9 @@ public:
     void init(std::string username, std::string password) {
         currentUser_ = std::move(username);
         currentPassword_ = std::move(password);
+
+        createNoteWindow = new CreateNoteWindow{currentUser_, currentPassword_};
+        createNoteWindow->init();
 
         layout.addWidget(&exitButton);
         layout.addWidget(&refreshButton);

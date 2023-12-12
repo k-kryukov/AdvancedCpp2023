@@ -30,4 +30,8 @@ public:
     auto createNote(std::string username, std::string const& passwd, std::string const& noteText) {
         return conn.createNote(std::move(username), passwd, noteText);
     }
+
+    auto removeNote(std::string username, std::string const& passwd, unsigned noteNumber) {
+        return conn.removeNote(std::move(username), passwd, noteNumber);
+    }
 };
