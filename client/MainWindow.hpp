@@ -28,8 +28,14 @@ private slots:
         ::exit(0);
     }
 
+    auto fetchNotesFromServer() {
+        return service.getNotes(currentUser_, currentPassword_);
+    }
+
 public:
     MainWindow() {}
+
+    void emplaceNotes(std::vector<std::string> notes) { LOG(INFO) << "Emplacing notes!"; }
 
     void init(std::string username, std::string password) {
         currentUser_ = std::move(username);
@@ -42,15 +48,11 @@ public:
         window.setLayout(&layout);
         window.setFixedSize(800, 800);
 
-        fetchNotesFromServer();
+        auto notes = fetchNotesFromServer();
+        emplaceNotes(std::move(notes));
 
         QObject::connect(&button, &QPushButton::clicked, this, &MainWindow::exitButtonPushed);
     }
 
     void show() { window.show(); }
-
-private:
-    void fetchNotesFromServer() {
-        auto notes = service.getNotes(currentUser_, currentPassword_);
-    }
 };

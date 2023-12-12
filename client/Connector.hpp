@@ -11,6 +11,7 @@
 #include <QString>
 #include <QJsonObject>
 #include <QJsonDocument>
+#include <QJsonArray>
 #include <QByteArray>
 #include <QEventLoop>
 
@@ -81,14 +82,20 @@ public:
 
         QByteArray reply = resp->readAll();
         QJsonDocument document = QJsonDocument::fromJson(reply);
-        QJsonObject rootObj = document.object();
+        QJsonObject json = document.object();
 
         LOG(INFO) << "Dumping notes...";
-        for (auto key : rootObj) {
-            LOG(INFO) << key.toString().toStdString();
-        }
+        auto notes = json[username.data()].toArray();
+        auto rv = std::vector<std::string>{};
+        rv.reserve(notes.size());
 
-        return std::vector<std::string>{};
+        std::for_each(notes.begin(), notes.end(),
+            [&rv] (auto&& note) {
+                rv.push_back(note.toString().toStdString());
+            }
+        );
+
+        return rv;
     }
 
     bool createNewUser(std::string const& username, std::string const& password) {
