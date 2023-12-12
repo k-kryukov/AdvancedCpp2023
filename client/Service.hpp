@@ -26,4 +26,8 @@ public:
     auto getNotes(std::string username, std::string const& passwd) {
         return conn.getNotes(std::move(username), passwd);
     }
+
+    auto createNote(std::string username, std::string const& passwd, std::string const& noteText) {
+        return conn.createNote(std::move(username), passwd, noteText);
+    }
 };

@@ -17,9 +17,10 @@ public:
 
             throw std::invalid_argument{std::move(ss).str()};
         }
-        LOG(INFO) << "Prev notes cnt: " << notes_.size();
+
+        DLOG(INFO) << "Prev notes cnt: " << notes_.size();
         notes_.erase(notes_.begin() + id);
-        LOG(INFO) << "Cur notes cnt: " << notes_.size();
+        DLOG(INFO) << "Cur notes cnt: " << notes_.size();
     }
 
     std::vector<std::shared_ptr<Note>> getNotes() {

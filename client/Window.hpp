@@ -9,6 +9,7 @@
 
 #include <glog/logging.h>
 #include "LoginWindow.hpp"
+#include "MainWindow.hpp"
 
 class Window : public QObject {
     MainWindow w;

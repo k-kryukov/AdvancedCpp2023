@@ -11,16 +11,21 @@
 #include <QPushButton>
 #include <QListWidget>
 #include <QLabel>
+#include <QMouseEvent>
 #include <glog/logging.h>
 
 #include "Service.hpp"
+#include "CreateNoteWindow.hpp"
 
 class MainWindow : public QObject
 {
     QPushButton exitButton;
     QPushButton refreshButton;
+    QPushButton removeNoteButton;
+    QPushButton addNoteButton;
     QVBoxLayout layout;
     QWidget window;
+    CreateNoteWindow* createNoteWindow = nullptr;
     Service service;
     std::string currentUser_;
     std::string currentPassword_;
@@ -40,6 +45,7 @@ public:
 
         for (auto&& note : notes) {
             QLabel *label = new QLabel(note.data(), &window);
+
             layout.addWidget(label);
             labels_.push_back(label);
         }
@@ -64,6 +70,17 @@ private slots:
         emplaceNotes(std::move(notes));
     }
 
+    void removeNoteButtonPushed() {
+
+    }
+
+    void addNoteButtonPushed() {
+        createNoteWindow = new CreateNoteWindow{currentUser_, currentPassword_};
+
+        createNoteWindow->init();
+        createNoteWindow->show();
+    }
+
 public:
     void init(std::string username, std::string password) {
         currentUser_ = std::move(username);
@@ -71,11 +88,20 @@ public:
 
         layout.addWidget(&exitButton);
         layout.addWidget(&refreshButton);
+        layout.addWidget(&removeNoteButton);
+        layout.addWidget(&addNoteButton);
+
         exitButton.setObjectName("pushButton");
         exitButton.setText("Exit");
 
         refreshButton.setObjectName("refreshButton");
         refreshButton.setText("Refresh");
+
+        removeNoteButton.setObjectName("removeNoteButton");
+        removeNoteButton.setText("Remove");
+
+        addNoteButton.setObjectName("addNoteButton");
+        addNoteButton.setText("Add");
 
         window.setLayout(&layout);
         window.setFixedSize(800, 800);
@@ -85,6 +111,8 @@ public:
 
         QObject::connect(&exitButton, &QPushButton::clicked, this, &MainWindow::exitButtonPushed);
         QObject::connect(&refreshButton, &QPushButton::clicked, this, &MainWindow::refreshButtonPushed);
+        QObject::connect(&removeNoteButton, &QPushButton::clicked, this, &MainWindow::removeNoteButtonPushed);
+        QObject::connect(&addNoteButton, &QPushButton::clicked, this, &MainWindow::addNoteButtonPushed);
     }
 
     void show() { window.show(); }

@@ -124,4 +124,32 @@ public:
 
         return resp->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() / 100 == 2;
     }
+
+    bool createNote(std::string const& username, std::string const& password, std::string const& noteText) {
+        QNetworkRequest request;
+        QUrlQuery query;
+
+        QUrl url = url_.toString() + QString{"/notes"};
+
+        QJsonObject json;
+        json["username"] = QString{username.data()};
+        json["password"] = QString{password.data()};
+        json["noteText"] = QString{noteText.data()};
+
+        LOG(INFO) << "URL is " << url.toString().toStdString();
+        auto jsonDoc = QJsonDocument{json}.toJson();
+
+        request.setUrl(url);
+        auto resp = manager.post(request, jsonDoc);
+        QEventLoop loop;
+        QObject::connect(resp, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+        loop.exec();
+
+        if (resp->error() != 0)
+            LOG(ERROR) << "Error: " << resp->errorString().toStdString();
+
+        LOG(INFO) << "Status: " << resp->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+
+        return resp->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() / 100 == 2;
+    }
 };

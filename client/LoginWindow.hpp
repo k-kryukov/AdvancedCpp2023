@@ -15,6 +15,7 @@
 #include "Window.hpp"
 #include "Service.hpp"
 #include "RegisterWindow.hpp"
+#include "MainWindow.hpp"
 
 class LoginWindow : public QObject {
     // Q_OBJECT
