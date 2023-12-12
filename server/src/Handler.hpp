@@ -267,6 +267,50 @@ public:
                        .prepare_payload();
     }
 
+ResponseType handleDeleteNote(asio::ip::tcp::socket& socket, std::shared_ptr<RequestType> request) {
+        ResponseWrapper response;
+
+        auto&& tgt = request->target().to_string();
+        LOG(INFO) << "Parsing query params";
+        LOG(INFO) << "URL is " << tgt;
+
+        try {
+            auto queryParams = parseQueryParams(tgt);
+
+            std::string userName = queryParams.at("username");
+            std::string password = queryParams.at("password");
+            auto noteNumber = std::stoi(queryParams.at("note"));
+
+            LOG(INFO) << "Username is " << userName << ", password is " << password;
+            LOG(INFO) << "Password len is " << password.length();
+
+            service_.removeNote(userName, noteNumber);
+
+            LOG(INFO) << "Printing notes...";
+        }
+        catch (std::out_of_range const& err) {
+            LOG(ERROR) << "Error: " << err.what();
+
+            return response.result(beast::http::status::bad_request);
+        }
+        catch (std::runtime_error const& err) {
+            LOG(ERROR) << "Error: " << err.what();
+
+            return response.result(beast::http::status::bad_request);
+        }
+
+        LOG(INFO) << "Users are:";
+        for (auto user : service_.getUsers()) {
+            LOG(INFO) << user;
+        }
+
+        LOG(INFO) << "Generating response for delete note request!";
+        return response.version(request->version())
+                       .result(beast::http::status::ok)
+                       .set(beast::http::field::content_type, "text/json")
+                       .prepare_payload();
+    }
+
     ResponseType handleNoteCreation(asio::ip::tcp::socket& socket, std::shared_ptr<RequestType> request) {
         auto&& body = request->body();
         auto parsedBody = nlohmann::json::parse(body, nullptr, false);

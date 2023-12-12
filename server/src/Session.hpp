@@ -99,6 +99,10 @@ public:
             auto resp = handler_.handleGetNotes(socket_, std::move(request));
             return resp;
         }
+        else if (request->method() == boost::beast::http::verb::delete_) {
+            auto resp = handler_.handleDeleteNote(socket_, std::move(request));
+            return resp;
+        }
         else {
             auto resp = handler_.handleUnexpectedRequest(socket_, std::move(request));
             return resp;

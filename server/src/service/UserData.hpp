@@ -6,27 +6,25 @@
 
 class UserData {
     // id -> Note
-    std::unordered_map<size_t, std::shared_ptr<Note>> notes_;
-    uint64_t nextID_{0};
+    std::vector<std::shared_ptr<Note>> notes_;
 public:
-    uint64_t addNote(std::shared_ptr<Note> note);
+    void addNote(std::shared_ptr<Note> note);
 
     void removeNote(uint64_t id) {
-        if (!notes_.contains(id)) {
+        if (id >= notes_.size()) {
             std::stringstream ss;
             ss << "Note does not exist; ID : " << id;
 
             throw std::invalid_argument{std::move(ss).str()};
         }
-
-        notes_.erase(id);
+        LOG(INFO) << "Prev notes cnt: " << notes_.size();
+        notes_.erase(notes_.begin() + id);
+        LOG(INFO) << "Cur notes cnt: " << notes_.size();
     }
 
     std::vector<std::shared_ptr<Note>> getNotes() {
         DLOG(INFO) << "Dumping notes...";
-        std::vector<std::shared_ptr<Note>> rv{notes_.size()};
-        std::transform(notes_.begin(), notes_.end(), rv.begin(), [] (auto kv) { return kv.second; });
 
-        return rv;
+        return notes_;
     }
 };

@@ -49,11 +49,11 @@ public:
         userData.erase(userName);
     }
 
-    uint64_t addNote(std::string const& userName, std::string pswdHash, std::shared_ptr<Note> note) {
+    void addNote(std::string const& userName, std::string pswdHash, std::shared_ptr<Note> note) {
         std::unique_lock lock{mtx_};
         checkUserExistance(userName);
 
-        return userData[userName]->addNote(note);
+        userData[userName]->addNote(note);
     }
 
     void removeNote(std::string const& userName, uint64_t id) {
