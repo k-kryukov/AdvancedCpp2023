@@ -22,32 +22,40 @@ class RemoveNoteWindow : public QObject {
     QLineEdit noteNumberText;
     QPushButton button;
 
-    std::string username_;
-    std::string password_;
+    QString username_;
+    QString password_;
 
     Service service;
-    // std::hash<std::string> stringHasher;
     // MainWindow* mainWindow;
     // RegisterWindow registerWindow;
 
 public:
-    RemoveNoteWindow(std::string username, std::string password)
+    RemoveNoteWindow(QString username, QString password)
         : username_{username}, password_{password} {}
     virtual ~RemoveNoteWindow() {}
 
 private slots:
     void pushButton() {
-        auto text = noteNumberText.text().toStdString();
-
-        auto res = service.removeNote(username_, password_, std::stoi(text));
         QMessageBox messageBox;
         messageBox.setFixedSize(500,200);
+        widget.hide();
+
+        auto ok = true;
+        auto noteNumber = noteNumberText.text().toInt(&ok);
+        if (!ok) {
+            messageBox.critical(
+                &widget,
+                "Error",
+                "Input is not a number"
+            );
+            return;
+        }
+
+        auto res = service.removeNote(username_, password_, noteNumber);
         if (res / 100 != 2)
             messageBox.critical(&widget, "Error", "An error has occured: usually it means that note does not exist");
         else
             messageBox.information(&widget, "OK!", "");
-
-        widget.hide();
     }
 
 public:

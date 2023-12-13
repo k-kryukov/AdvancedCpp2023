@@ -22,24 +22,21 @@ class CreateNoteWindow : public QObject {
     QLineEdit noteText;
     QPushButton button;
 
-    std::string username_;
-    std::string password_;
+    QString username_;
+    QString password_;
 
     Service service;
-    // std::hash<std::string> stringHasher;
-    // MainWindow* mainWindow;
-    // RegisterWindow registerWindow;
 
 public:
-    CreateNoteWindow(std::string username, std::string password)
+    CreateNoteWindow(QString username, QString password)
         : username_{username}, password_{password} {}
     virtual ~CreateNoteWindow() {}
 
 private slots:
     void pushButton() {
-        auto text = noteText.text().toStdString();
+        widget.hide();
 
-        auto res = service.createNote(username_, password_, text);
+        auto res = service.createNote(username_, password_, noteText.text());
         QMessageBox messageBox;
         messageBox.setFixedSize(500,200);
         if (res / 100 != 2)

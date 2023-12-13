@@ -27,7 +27,6 @@ class LoginWindow : public QObject {
     QPushButton button;
     QPushButton registerButton;
     Service service;
-    // std::hash<std::string> stringHasher;
     MainWindow* mainWindow;
     RegisterWindow registerWindow;
 
@@ -39,8 +38,8 @@ public:
 private slots:
     void pushButton() {
         auto resp = service.checkCreds(
-            userLine.text().toStdString(),
-            passwordLine.text().toStdString()
+            userLine.text(),
+            passwordLine.text()
         );
 
         if (!resp){
@@ -55,8 +54,8 @@ private slots:
             loginWidget.hide();
 
             mainWindow->init(
-                userLine.text().toStdString(),
-                passwordLine.text().toStdString()
+                userLine.text(),
+                passwordLine.text()
             );
             mainWindow->show();
         }

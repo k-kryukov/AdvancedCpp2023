@@ -17,7 +17,7 @@
 #include "RegisterWindow.hpp"
 
 class RegisterWindow : public QObject {
-    QWidget registerWidget;
+    QWidget widget;
     QPushButton button;
     QVBoxLayout layout;
     QLineEdit userLine;
@@ -25,24 +25,25 @@ class RegisterWindow : public QObject {
     Service service;
 
 public:
-    RegisterWindow() : registerWidget{} { init(); }
+    RegisterWindow() : widget{} { init(); }
     virtual ~RegisterWindow() {}
 
-    void show() { registerWidget.setFixedSize(600, 600); registerWidget.show(); }
+    void show() { widget.setFixedSize(600, 600); widget.show(); }
 
 private slots:
     void pushButton() {
         LOG(INFO) << "Register!";
+        widget.hide();
 
-        auto res = service.createUser(userLine.text().toStdString(), passwordLine.text().toStdString());
+        auto res = service.createUser(userLine.text(), passwordLine.text());
         QMessageBox messageBox;
         messageBox.setFixedSize(500,200);
         if (res / 100 != 2) {
             DLOG(INFO) << "res is " << res;
-            messageBox.critical(&registerWidget, "Error", "An error has occured: usually it means that user already exists!");
+            messageBox.critical(&widget, "Error", "An error has occured: usually it means that user already exists!");
         }
         else
-            messageBox.information(&registerWidget, "OK!", "");
+            messageBox.information(&widget, "OK!", "");
     }
 
 public:
@@ -58,8 +59,8 @@ public:
 
         button.setText("Register!");
 
-        registerWidget.setWindowTitle("Register window");
-        registerWidget.setLayout(&layout);
+        widget.setWindowTitle("Register window");
+        widget.setLayout(&layout);
 
         QObject::connect(&button, &QPushButton::clicked, this, &RegisterWindow::pushButton);
     }

@@ -9,29 +9,28 @@ class Service {
     Connector conn{};
 
     // send request to server and check whether creds are correct
-    bool matchCredsWithRemote(std::string username, std::string passwd) {
-        // return "A" == username && std::hash<std::string>{}("1") == passwd;
+    bool matchCredsWithRemote(QString username, QString passwd) {
         return conn.checkCreds(username, passwd);
     }
 
 public:
-    auto checkCreds(std::string username, std::string const& passwd) {
+    auto checkCreds(QString username, QString passwd) {
         return matchCredsWithRemote(std::move(username), passwd);
     }
 
-    auto createUser(std::string username, std::string const& passwd) {
+    auto createUser(QString username, QString passwd) {
         return conn.createNewUser(std::move(username), passwd);
     }
 
-    auto getNotes(std::string username, std::string const& passwd) {
+    auto getNotes(QString username, QString passwd) {
         return conn.getNotes(std::move(username), passwd);
     }
 
-    auto createNote(std::string username, std::string const& passwd, std::string const& noteText) {
+    auto createNote(QString username, QString passwd, QString noteText) {
         return conn.createNote(std::move(username), passwd, noteText);
     }
 
-    auto removeNote(std::string username, std::string const& passwd, unsigned noteNumber) {
+    auto removeNote(QString username, QString passwd, unsigned noteNumber) {
         return conn.removeNote(std::move(username), passwd, noteNumber);
     }
 };

@@ -1,12 +1,6 @@
-// #include <concepts>
+// #include <QLabel>
 
-// #include <QMainWindow>
-// #include <QWidget>
-// #include <QBoxLayout>
-// #include <QLineEdit>
-// #include <QMessageBox>
-// #include <QPushButton>
-// #include <QObject>
+// class MainWindow;
 
 // class ClickableLabel : public QLabel
 // {
@@ -14,7 +8,7 @@
 //     explicit ClickableLabel(const QString &text, QWidget *parent = nullptr)
 //         : QLabel(text, parent) {}
 
-//     void setClickCallback(std::invocable auto f) {
-//         QObject::connect(this, &QLabel::mousePressEvent, )
+//     void setClickCallback(MainWindow* window, std::invocable<> auto f) {
+//         QObject::connect(this, &ClickableLabel::mousePressEvent, window, f);
 //     }
 // };

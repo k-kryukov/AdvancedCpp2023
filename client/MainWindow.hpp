@@ -10,13 +10,14 @@
 #include <QMessageBox>
 #include <QPushButton>
 #include <QListWidget>
-#include <QLabel>
 #include <QMouseEvent>
+#include <QLabel>
 #include <glog/logging.h>
 
 #include "Service.hpp"
 #include "CreateNoteWindow.hpp"
 #include "RemoveNoteWindow.hpp"
+#include "ClickableLabel.hpp"
 
 class MainWindow : public QObject
 {
@@ -29,15 +30,14 @@ class MainWindow : public QObject
     CreateNoteWindow* createNoteWindow = nullptr;
     RemoveNoteWindow* removeNoteWindow = nullptr;
     Service service;
-    std::string currentUser_;
-    std::string currentPassword_;
-    std::vector<std::string> notes_;
+    QString currentUser_;
+    QString currentPassword_;
     std::vector<QLabel*> labels_;
 
 public:
     MainWindow() {}
 
-    void emplaceNotes(std::vector<std::string> notes) {
+    void emplaceNotes(std::vector<QString> notes) {
         for (auto label : labels_) {
             layout.removeWidget(label);
         }
@@ -46,7 +46,32 @@ public:
         labels_.clear();
 
         for (auto&& note : notes) {
-            QLabel *label = new QLabel(note.data(), &window);
+            auto noteNumber = 1;
+            QLabel *label = new QLabel(note, &window);
+            // label->setClickCallback(
+            //     this,
+            //     [this, user = currentUser_, passwd = currentPassword_, noteNumber] () {
+            //         LOG(INFO) << "Destroying!";
+            //         QMessageBox messageBox;
+            //         messageBox.setFixedSize(500,200);
+
+            //         auto ok = true;
+            //         if (!ok) {
+            //             messageBox.critical(
+            //                 nullptr,
+            //                 "Error",
+            //                 "Input is not a number"
+            //             );
+            //             return;
+            //         }
+
+            //         auto res = service.removeNote(user, passwd, noteNumber);
+            //         if (res / 100 != 2)
+            //             messageBox.critical(nullptr, "Error", "An error has occured: usually it means that note does not exist");
+            //         else
+            //             messageBox.information(nullptr, "OK!", "");
+            //     }
+            // );
 
             layout.addWidget(label);
             labels_.push_back(label);
@@ -81,9 +106,9 @@ private slots:
     }
 
 public:
-    void init(std::string username, std::string password) {
-        currentUser_ = std::move(username);
-        currentPassword_ = std::move(password);
+    void init(QString username, QString password) {
+        currentUser_ = username;
+        currentPassword_ = password;
 
         createNoteWindow = new CreateNoteWindow{currentUser_, currentPassword_};
         createNoteWindow->init();

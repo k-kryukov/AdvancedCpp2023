@@ -15,25 +15,27 @@
 #include <QByteArray>
 #include <QEventLoop>
 
+#include "QTExtended.hpp"
+
 class Connector {
     QUrl url_{"http://localhost:12345"};
     QNetworkAccessManager manager;
 
 public:
-    Connector(std::string const& s) : url_(QString{s.data()}) {}
+    Connector(QString s) : url_(s) {}
     Connector() {}
 
-    bool checkCreds(std::string const& username, std::string const& passwordHash) {
+    bool checkCreds(QString username, QString passwordHash) {
         QNetworkRequest request;
         QUrlQuery query;
 
         QUrl url = url_.toString() + QString{"/validate-creds"};
 
-        query.addQueryItem("username", username.data());
-        query.addQueryItem("password", passwordHash.data());
+        query.addQueryItem("username", username);
+        query.addQueryItem("password", passwordHash);
 
         url.setQuery(query.query());
-        LOG(INFO) << url.toString().toStdString();
+        LOG(INFO) << url.toString();
 
         request.setUrl(url);
 
@@ -50,17 +52,17 @@ public:
         return resp->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() / 100 == 2;
     }
 
-    auto getNotes(std::string const& username, std::string const& passwordHash) {
+    auto getNotes(QString username, QString passwordHash) {
         QNetworkRequest request;
         QUrlQuery query;
 
-        QUrl url = url_.toString() + QString{"/notes"};
+        QUrl url = url_.resolved(QString{"/notes"});
 
-        query.addQueryItem("username", username.data());
-        query.addQueryItem("password", passwordHash.data());
+        query.addQueryItem("username", username);
+        query.addQueryItem("password", passwordHash);
 
         url.setQuery(query.query());
-        LOG(INFO) << url.toString().toStdString();
+        LOG(INFO) << url.toString();
 
         request.setUrl(url);
 
@@ -77,7 +79,7 @@ public:
         auto success = resp->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() / 100 == 2;
         if (!success) {
             LOG(ERROR) << "HTTP status code: " << resp->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-            return std::vector<std::string>{};
+            return std::vector<QString>{};
         }
 
         QByteArray reply = resp->readAll();
@@ -86,19 +88,19 @@ public:
 
         LOG(INFO) << "Dumping notes...";
         auto notes = json[username.data()].toArray();
-        auto rv = std::vector<std::string>{};
+        auto rv = std::vector<QString>{};
         rv.reserve(notes.size());
 
         std::for_each(notes.begin(), notes.end(),
             [&rv] (auto&& note) {
-                rv.push_back(note.toString().toStdString());
+                rv.push_back(note.toString());
             }
         );
 
         return rv;
     }
 
-    int createNewUser(std::string const& username, std::string const& password) {
+    int createNewUser(QString username, QString password) {
         QNetworkRequest request;
         QUrlQuery query;
 
@@ -108,7 +110,7 @@ public:
         json["username"] = QString{username.data()};
         json["password"] = QString{password.data()};
 
-        LOG(INFO) << "URL is " << url.toString().toStdString();
+        LOG(INFO) << "URL is " << url.toString();
         auto jsonDoc = QJsonDocument{json}.toJson();
 
         request.setUrl(url);
@@ -119,13 +121,13 @@ public:
         loop.exec();
 
         if (resp->error() != 0)
-            LOG(ERROR) << "Error: " << resp->errorString().toStdString();
+            LOG(ERROR) << "Error: " << resp->errorString();
 
         LOG(INFO) << "Status code: " << resp->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
         return resp->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     }
 
-    int createNote(std::string const& username, std::string const& password, std::string const& noteText) {
+    int createNote(QString username, QString password, QString noteText) {
         QNetworkRequest request;
         QUrlQuery query;
 
@@ -136,7 +138,7 @@ public:
         json["password"] = QString{password.data()};
         json["noteText"] = QString{noteText.data()};
 
-        LOG(INFO) << "URL is " << url.toString().toStdString();
+        LOG(INFO) << "URL is " << url.toString();
         auto jsonDoc = QJsonDocument{json}.toJson();
 
         request.setUrl(url);
@@ -146,25 +148,25 @@ public:
         loop.exec();
 
         if (resp->error() != 0)
-            LOG(ERROR) << "Error: " << resp->errorString().toStdString();
+            LOG(ERROR) << "Error: " << resp->errorString();
 
         LOG(INFO) << "Status: " << resp->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
 
         return resp->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     }
 
-    int removeNote(std::string const& username, std::string const& password, unsigned num) {
+    int removeNote(QString username, QString password, unsigned num) {
         QNetworkRequest request;
         QUrlQuery query;
 
         QUrl url = url_.toString() + QString{"/notes"};
 
-        query.addQueryItem("username", username.data());
-        query.addQueryItem("password", password.data());
+        query.addQueryItem("username", username);
+        query.addQueryItem("password", password);
         query.addQueryItem("note", std::to_string(num).data());
 
         url.setQuery(query.query());
-        LOG(INFO) << url.toString().toStdString();
+        LOG(INFO) << url.toString();
         request.setUrl(url);
 
         auto resp = manager.deleteResource(request);
@@ -173,7 +175,7 @@ public:
         loop.exec();
 
         if (resp->error() != 0)
-            LOG(ERROR) << "Error: " << resp->errorString().toStdString();
+            LOG(ERROR) << "Error: " << resp->errorString();
 
         LOG(INFO) << "Status: " << resp->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
 
