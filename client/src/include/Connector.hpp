@@ -25,7 +25,7 @@ public:
     Connector(QString s) : url_(s) {}
     Connector() {}
 
-    bool checkCreds(QString username, QString passwordHash) {
+    auto checkCreds(QString username, QString passwordHash) {
         QNetworkRequest request;
         QUrlQuery query;
 
@@ -45,11 +45,11 @@ public:
         loop.exec();
 
         if (resp->error() != 0) {
-            LOG(ERROR) << resp->error();
+            LOG(ERROR) << resp->errorString();
         }
         LOG(INFO) << "Status: " << resp->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
 
-        return resp->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() / 100 == 2;
+        return resp->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     }
 
     auto getNotes(QString username, QString passwordHash) {
