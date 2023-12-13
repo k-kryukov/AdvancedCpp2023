@@ -15,11 +15,11 @@ class Service {
     }
 
 public:
-    bool checkCreds(std::string username, std::string const& passwd) {
+    auto checkCreds(std::string username, std::string const& passwd) {
         return matchCredsWithRemote(std::move(username), passwd);
     }
 
-    bool createUser(std::string username, std::string const& passwd) {
+    auto createUser(std::string username, std::string const& passwd) {
         return conn.createNewUser(std::move(username), passwd);
     }
 

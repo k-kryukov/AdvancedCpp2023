@@ -37,8 +37,10 @@ private slots:
         auto res = service.createUser(userLine.text().toStdString(), passwordLine.text().toStdString());
         QMessageBox messageBox;
         messageBox.setFixedSize(500,200);
-        if (!res)
+        if (res / 100 != 2) {
+            DLOG(INFO) << "res is " << res;
             messageBox.critical(&registerWidget, "Error", "An error has occured: usually it means that user already exists!");
+        }
         else
             messageBox.information(&registerWidget, "OK!", "");
     }

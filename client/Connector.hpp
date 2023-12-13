@@ -98,7 +98,7 @@ public:
         return rv;
     }
 
-    bool createNewUser(std::string const& username, std::string const& password) {
+    int createNewUser(std::string const& username, std::string const& password) {
         QNetworkRequest request;
         QUrlQuery query;
 
@@ -112,6 +112,7 @@ public:
         auto jsonDoc = QJsonDocument{json}.toJson();
 
         request.setUrl(url);
+        request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
         auto resp = manager.post(request, jsonDoc);
         QEventLoop loop;
         QObject::connect(resp, &QNetworkReply::finished, &loop, &QEventLoop::quit);
@@ -120,12 +121,11 @@ public:
         if (resp->error() != 0)
             LOG(ERROR) << "Error: " << resp->errorString().toStdString();
 
-        LOG(INFO) << "Status: " << resp->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-
-        return resp->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() / 100 == 2;
+        LOG(INFO) << "Status code: " << resp->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        return resp->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     }
 
-    bool createNote(std::string const& username, std::string const& password, std::string const& noteText) {
+    int createNote(std::string const& username, std::string const& password, std::string const& noteText) {
         QNetworkRequest request;
         QUrlQuery query;
 
@@ -150,10 +150,10 @@ public:
 
         LOG(INFO) << "Status: " << resp->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
 
-        return resp->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() / 100 == 2;
+        return resp->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     }
 
-    bool removeNote(std::string const& username, std::string const& password, unsigned num) {
+    int removeNote(std::string const& username, std::string const& password, unsigned num) {
         QNetworkRequest request;
         QUrlQuery query;
 
@@ -177,6 +177,6 @@ public:
 
         LOG(INFO) << "Status: " << resp->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
 
-        return resp->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() / 100 == 2;
+        return resp->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     }
 };

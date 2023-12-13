@@ -16,6 +16,7 @@
 
 #include "Service.hpp"
 #include "CreateNoteWindow.hpp"
+#include "RemoveNoteWindow.hpp"
 
 class MainWindow : public QObject
 {
@@ -26,6 +27,7 @@ class MainWindow : public QObject
     QVBoxLayout layout;
     QWidget window;
     CreateNoteWindow* createNoteWindow = nullptr;
+    RemoveNoteWindow* removeNoteWindow = nullptr;
     Service service;
     std::string currentUser_;
     std::string currentPassword_;
@@ -71,7 +73,7 @@ private slots:
     }
 
     void removeNoteButtonPushed() {
-
+        removeNoteWindow->show();
     }
 
     void addNoteButtonPushed() {
@@ -85,6 +87,8 @@ public:
 
         createNoteWindow = new CreateNoteWindow{currentUser_, currentPassword_};
         createNoteWindow->init();
+        removeNoteWindow = new RemoveNoteWindow{currentUser_, currentPassword_};
+        removeNoteWindow->init();
 
         layout.addWidget(&exitButton);
         layout.addWidget(&refreshButton);

@@ -39,7 +39,13 @@ private slots:
     void pushButton() {
         auto text = noteNumberText.text().toStdString();
 
-        service.removeNote(username_, password_, std::stoi(text));
+        auto res = service.removeNote(username_, password_, std::stoi(text));
+        QMessageBox messageBox;
+        messageBox.setFixedSize(500,200);
+        if (res / 100 != 2)
+            messageBox.critical(&widget, "Error", "An error has occured: usually it means that note does not exist");
+        else
+            messageBox.information(&widget, "OK!", "");
 
         widget.hide();
     }

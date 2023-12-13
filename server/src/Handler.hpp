@@ -298,6 +298,11 @@ ResponseType handleDeleteNote(asio::ip::tcp::socket& socket, std::shared_ptr<Req
 
             return response.result(beast::http::status::bad_request);
         }
+        catch (std::invalid_argument const& err) {
+            LOG(ERROR) << "Error: " << err.what();
+
+            return response.result(beast::http::status::bad_request);
+        }
 
         LOG(INFO) << "Users are:";
         for (auto user : service_.getUsers()) {
