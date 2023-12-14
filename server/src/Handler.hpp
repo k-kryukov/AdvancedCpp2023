@@ -109,33 +109,32 @@ public:
     ResponseType handleRemoveUserRequest(asio::ip::tcp::socket& socket, std::shared_ptr<RequestType> request) {
         ResponseWrapper response;
 
-        auto&& body = request->body();
-        auto parsedBody = nlohmann::json::parse(body, nullptr, false);
-        if (parsedBody.is_discarded()) {
-            LOG(INFO) << "Generating response for remove request [non JSON]!";
-
-            return response.result(beast::http::status::unprocessable_entity);
-        }
+        auto&& tgt = request->target().to_string();
+        LOG(INFO) << "Parsing query params";
+        LOG(INFO) << "URL is " << tgt;
 
         try {
-            std::string userName = parsedBody.at("username");
-            std::string passwordHashed = parsedBody.at("password");
-            if (!service_.credsValid(userName, passwordHashed))
-                return response.result(beast::http::status::bad_request);
+            auto queryParams = parseQueryParams(tgt);
 
-            boost::asio::post(
-                tp_, [&service = service_, userName = std::move(userName), passwordHashed] () {
-                    service.removeUser(userName, passwordHashed);
-                }
-            );
+            std::string userName = queryParams.at("username");
+            std::string password = queryParams.at("password");
+
+            DLOG(INFO) << "Username is " << userName << ", password is " << password;
+
+            service_.removeUser(userName, password);
         }
-        catch (json::exception const& err) {
-            LOG(INFO) << "Error: " << err.what();
+        catch (std::out_of_range const& err) {
+            LOG(ERROR) << "Error: " << err.what();
 
             return response.result(beast::http::status::bad_request);
         }
         catch (std::runtime_error const& err) {
-            LOG(INFO) << "Error: " << err.what();
+            LOG(ERROR) << "Error: " << err.what();
+
+            return response.result(beast::http::status::bad_request);
+        }
+        catch (std::invalid_argument const& err) {
+            LOG(ERROR) << "Error: " << err.what();
 
             return response.result(beast::http::status::bad_request);
         }
@@ -145,10 +144,9 @@ public:
             LOG(INFO) << user;
         }
 
-        LOG(INFO) << "Generating response for remove request!";
+        LOG(INFO) << "Generating response for delete user request!";
         return response.version(request->version())
                        .result(beast::http::status::ok)
-                       .set(beast::http::field::content_type, "text/plain")
                        .prepare_payload();
     }
 
@@ -208,7 +206,7 @@ public:
     ResponseType handleUnexpectedRequest(asio::ip::tcp::socket& socket, std::shared_ptr<RequestType> request) {
         ResponseWrapper response;
 
-        LOG(INFO) << "Generating response for unexpected request!";
+        LOG(WARNING) << "Generating response for unexpected request!";
         return response.version(request->version())
                        .result(beast::http::status::not_found)
                        .prepare_payload();
@@ -267,7 +265,7 @@ public:
                        .prepare_payload();
     }
 
-ResponseType handleDeleteNote(asio::ip::tcp::socket& socket, std::shared_ptr<RequestType> request) {
+    ResponseType handleDeleteNote(asio::ip::tcp::socket& socket, std::shared_ptr<RequestType> request) {
         ResponseWrapper response;
 
         auto&& tgt = request->target().to_string();

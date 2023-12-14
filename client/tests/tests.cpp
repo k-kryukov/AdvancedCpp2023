@@ -1,50 +1,70 @@
-#include <gtest/gtest.h>
 #include <glog/logging.h>
+#include <gtest/gtest.h>
+
+#include <QApplication>
 #include <boost/asio.hpp>
 
 #include "Service.hpp"
-#include <QApplication>
 
-auto sendRequest(QString data, QString contentType, QString stringUrl) {
-    static QNetworkAccessManager manager;
+TEST(ServiceTests, TestConnectorUsersManager) {
+  Connector conn;
+  int res;
 
-    QNetworkRequest request;
-    QUrl url = stringUrl;
-    request.setUrl(url);
-    request.setHeader(QNetworkRequest::ContentTypeHeader, contentType);
-    LOG(INFO) << "URL is " << url.toString();
+  // check + create + check
+  ASSERT_EQ(conn.checkCreds("krecov", "123"), 404);
+  ASSERT_EQ(conn.createNewUser("krecov", "123"), 200);
+  ASSERT_EQ(conn.checkCreds("krecov", "123"), 200);
 
-    auto resp = manager.post(request, data.toUtf8());
-    QEventLoop loop;
-    QObject::connect(resp, &QNetworkReply::finished, &loop, &QEventLoop::quit);
-    loop.exec();
+  // create existing user + existing with different password
+  ASSERT_EQ(conn.createNewUser("krecov", "123"), 400);
+  ASSERT_EQ(conn.createNewUser("krecov", "1234"), 400);
 
-    if (resp->error() != 0) {
-        LOG(ERROR) << resp->error();
-    }
-    LOG(INFO) << "Status: " << resp->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+  // add + check + remove + check
+  ASSERT_EQ(conn.createNewUser("krecov1", "123"), 200);
+  ASSERT_EQ(conn.checkCreds("krecov1", "1234"), 404);
+  ASSERT_EQ(conn.removeUser("krecov1", "123"), 200);
+  ASSERT_EQ(conn.checkCreds("krecov1", "123"), 404);
 
-    return resp->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+  // remove with wrong password + check + remove + check
+  ASSERT_EQ(conn.removeUser("krecov", "1234"), 400);
+  ASSERT_EQ(conn.checkCreds("krecov", "123"), 200);
+  ASSERT_EQ(conn.removeUser("krecov", "123"), 200);
+  ASSERT_EQ(conn.checkCreds("krecov", "123"), 404);
+
+  ASSERT_EQ(conn.getUsers().empty(), true);
 }
 
-TEST(Service, TestConnector) {
-    QString baseUrl = "http://localhost:8192";
-    int res;
+TEST(ServiceTests, TestConnectorNotesManager) {
+  Connector conn;
+  auto [username, password] = std::tuple("krecov", "123");
 
-    res = sendRequest("200", "plain/text", baseUrl + QString{"/save-status"});
-    ASSERT_EQ(res, 200);
+  // create + check
+  ASSERT_EQ(conn.createNewUser(username, password), 200);
+  ASSERT_EQ(conn.checkCreds(username, password), 200);
 
-    Connector conn{baseUrl};
+  // create N times + check notes cnt
+  ASSERT_EQ(conn.createNote(username, password, "Note1"), 200);
+  ASSERT_EQ(conn.createNote(username, password, "Note2"), 200);
+  ASSERT_EQ(conn.createNote(username, password, "Note1"), 200);
+  ASSERT_EQ(conn.createNote(username, password, "AgainNote1"), 200);
+  ASSERT_EQ(conn.getNotes(username, password).size(), 4);
 
-    res = conn.checkCreds("123", "123");
-    ASSERT_EQ(res, 200);
+  // remove + remove wrong idx + remove wrong idx + check notes cnt
+  ASSERT_EQ(conn.removeNote(username, password, 3), 200);
+  ASSERT_EQ(conn.removeNote(username, password, 3), 400);
+  ASSERT_EQ(conn.removeNote(username, password, -1), 400);
+  ASSERT_EQ(conn.getNotes(username, password).size(), 3);
+
+  // remove user + check notes are empty
+  ASSERT_EQ(conn.removeUser(username, password), 200);
+  ASSERT_EQ(conn.getNotes(username, password).size(), 0);
 }
 
 int main(int argc, char* argv[]) {
-    google::InitGoogleLogging(argv[0]);
-    testing::InitGoogleTest(&argc, argv);
-    FLAGS_alsologtostderr = 1;
-    QApplication app{argc, argv};
+  google::InitGoogleLogging(argv[0]);
+  testing::InitGoogleTest(&argc, argv);
+  FLAGS_alsologtostderr = 1;
+  QApplication app{argc, argv};
 
-    return RUN_ALL_TESTS() && app.exec();
+  return RUN_ALL_TESTS() && app.exec();
 }

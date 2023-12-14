@@ -100,6 +100,47 @@ public:
         return rv;
     }
 
+    auto getUsers() {
+        QNetworkRequest request;
+
+        QUrl url = url_.resolved(QString{"/users"});
+        request.setUrl(url);
+        LOG(INFO) << url.toString();
+
+        auto resp = manager.get(request);
+        QEventLoop loop;
+        QObject::connect(resp, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+        loop.exec();
+
+        if (resp->error() != 0) {
+            LOG(ERROR) << resp->error();
+        }
+        LOG(INFO) << "Status: " << resp->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+
+        auto success = resp->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() / 100 == 2;
+        if (!success) {
+            LOG(ERROR) << "HTTP status code: " << resp->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+            return std::vector<QString>{};
+        }
+
+        QByteArray reply = resp->readAll();
+        QJsonDocument document = QJsonDocument::fromJson(reply);
+        QJsonObject json = document.object();
+
+        LOG(INFO) << "Dumping users to array...";
+        auto arr = document.array();
+        auto rv = std::vector<QString>{};
+        rv.reserve(arr.size());
+
+        std::for_each(arr.begin(), arr.end(),
+            [&rv] (auto&& user) {
+                rv.push_back(user.toString());
+            }
+        );
+
+        return rv;
+    }
+
     int createNewUser(QString username, QString password) {
         QNetworkRequest request;
         QUrlQuery query;
@@ -155,7 +196,7 @@ public:
         return resp->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     }
 
-    int removeNote(QString username, QString password, unsigned num) {
+    auto removeNote(QString username, QString password, unsigned num) {
         QNetworkRequest request;
         QUrlQuery query;
 
@@ -164,6 +205,32 @@ public:
         query.addQueryItem("username", username);
         query.addQueryItem("password", password);
         query.addQueryItem("note", std::to_string(num).data());
+
+        url.setQuery(query.query());
+        LOG(INFO) << url.toString();
+        request.setUrl(url);
+
+        auto resp = manager.deleteResource(request);
+        QEventLoop loop;
+        QObject::connect(resp, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+        loop.exec();
+
+        if (resp->error() != 0)
+            LOG(ERROR) << "Error: " << resp->errorString();
+
+        LOG(INFO) << "Status: " << resp->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+
+        return resp->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    }
+
+    int removeUser(QString username, QString password) {
+        QNetworkRequest request;
+        QUrlQuery query;
+
+        QUrl url = url_.toString() + QString{"/users"};
+
+        query.addQueryItem("username", username);
+        query.addQueryItem("password", password);
 
         url.setQuery(query.query());
         LOG(INFO) << url.toString();

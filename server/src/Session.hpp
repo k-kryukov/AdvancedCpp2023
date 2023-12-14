@@ -54,7 +54,7 @@ public:
                 auto&& tgt = request->target();
 
                 auto resp = std::make_shared<Handler::ResponseType>(
-                    (tgt == "/users") ?
+                    (std::regex_search(tgt.data(), std::regex{"/users\?.+"})) ?
                         self->dispatchUsers(request)
                     : (std::regex_search(tgt.data(), std::regex{"/notes\?.+"})) ?
                         self->dispatchNotes(request)
@@ -72,6 +72,7 @@ public:
     }
 
     Handler::ResponseType dispatchUsers(std::shared_ptr<RequestType> request) {
+        DLOG(INFO) << "Req target is " << request->target() << ", method is " << request->method();
         if (request->method() == boost::beast::http::verb::post) {
             auto resp = handler_.handleRegisterRequest(socket_, std::move(request));
             return resp;

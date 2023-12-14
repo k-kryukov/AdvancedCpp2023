@@ -9,3 +9,8 @@ test-server:
 
 test-client:
 	/bin/bash test.bash --client
+
+test: test-server test-client
+
+clean:
+	rm -rf build .pytest_cache cmake-build-debug

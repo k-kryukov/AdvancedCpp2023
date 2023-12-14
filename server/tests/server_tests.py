@@ -15,8 +15,7 @@ class TestServer:
         users = requests.get(url + "/users").json()
         assert users == [username]
 
-        req_body = { "username": username, "password": str(password) }
-        assert requests.delete(url + "/users", json=req_body).status_code == 200
+        assert requests.delete(url + f"/users?username={username}&password={password}").status_code == 200
 
         users = requests.get(url + "/users").json()
         assert users == []
@@ -50,10 +49,8 @@ class TestServer:
         notes = requests.get(url + f"/notes?username={username*2}&password={password}").json()
         assert set(notes.get(username*2)) == set()
 
-        req_body = { "username": username, "password": str(password) }
-        requests.delete(url + "/users", json=req_body)
-        req_body = { "username": username * 2, "password": str(password) }
-        requests.delete(url + "/users", json=req_body)
+        assert requests.delete(url + f"/users?username={username}&password={password}").status_code == 200
+        assert requests.delete(url + f"/users?username={username*2}&password={password}").status_code == 200
 
         assert requests.get(url + "/users").json() == []
 

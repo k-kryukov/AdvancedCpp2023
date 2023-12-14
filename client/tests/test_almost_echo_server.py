@@ -1,11 +1,16 @@
+
 import requests
 
 url = f"http://localhost:{1 << 13}"
 
+'''
+Deprecated tests!
+'''
 class TestAlmostEchoServer:
-    def test_server(self):
+    def _test_server(self):
         body = {"hello": "world"}
         assert requests.post(url + "/save-body", json=body).status_code == 200
+        assert requests.post(url + "/save-status", data="200").status_code == 200
 
         r = requests.get(url + "/not-save", json={"hello!": "world!!!"})
         assert r.status_code == 200

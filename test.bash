@@ -9,14 +9,15 @@ if [[ $1 == "--client" ]]; then
     }
 
     trap cleanup EXIT
-    ./build/client/tests/almost_echo_server &
+    # ./build/client/tests/almost_echo_server &
+    ./build/server/src/server &
     pid=$!
 
     ./build/client/tests/client-tests
 
     echo "Testing client..."
 
-    python3 -m pytest -v ./client/tests/test_almost_echo_server.py
+    # python3 -m pytest -v ./client/tests/test_almost_echo_server.py
 elif [[ $1 == "--server" ]]; then
     # internal tests
     ./build/server/tests/server-tests
