@@ -9,7 +9,7 @@ class Service {
     Connector conn{};
 
     // send request to server and check whether creds are correct
-    bool matchCredsWithRemote(QString username, QString passwd) {
+    auto matchCredsWithRemote(QString username, QString passwd) {
         return conn.checkCreds(username, passwd);
     }
 

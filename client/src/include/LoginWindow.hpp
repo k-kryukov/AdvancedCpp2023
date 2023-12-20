@@ -42,14 +42,15 @@ private slots:
             passwordLine.text()
         );
 
-        if (!resp){
+        LOG(INFO) << "RESP IS " << resp;
+        if (resp / 100 != 2){
             LOG(INFO) << "Creds are not ok!";
             QMessageBox messageBox;
             messageBox.setFixedSize(500,200);
             messageBox.critical(0, "Error", "Wrong creds");
+            return;
         }
-
-        if (resp) {
+        else {
             LOG(INFO) << "Creds are ok!";
             loginWidget.hide();
 
