@@ -1,5 +1,7 @@
 build
 
+build-*
+
 *.out
 *.exe
 *.so
@@ -7,3 +9,16 @@ build
 *.lib
 *.dll
 
+.pytest_cache
+
+*.user
+
+.vscode
+
+*build*
+
+.idea
+
+.vscode
+build
+__pycache__
