@@ -1,6 +1,7 @@
 #include <unordered_map>
 #include <algorithm>
 #include <glog/logging.h>
+#include <memory>
 
 #include "Note.hpp"
 
