@@ -1,70 +1,71 @@
 #include <glog/logging.h>
-#include <gtest/gtest.h>
-
+#include <QTest>
 #include <QApplication>
+#include <QString>
 #include <boost/asio.hpp>
 
 #include "Service.hpp"
 
-TEST(ServiceTests, TestConnectorUsersManager) {
-  Connector conn;
-  int res;
+class ClientTests : public QObject
+{
+	Q_OBJECT
 
-  // check + create + check
-  ASSERT_EQ(conn.checkCreds("krecov", "123"), 404);
-  ASSERT_EQ(conn.createNewUser("krecov", "123"), 200);
-  ASSERT_EQ(conn.checkCreds("krecov", "123"), 200);
+	Connector conn;
+	int res;
+	QString username{"krecov"};
+	QString password{"123"};
 
-  // create existing user + existing with different password
-  ASSERT_EQ(conn.createNewUser("krecov", "123"), 400);
-  ASSERT_EQ(conn.createNewUser("krecov", "1234"), 400);
+private slots:
+	void TestConnectorUsersManager()
+	{
+		// check + create + check
+		QCOMPARE(conn.checkCreds("krecov", "123"), 404);
+		QCOMPARE(conn.createNewUser("krecov", "123"), 200);
+		QCOMPARE(conn.checkCreds("krecov", "123"), 200);
 
-  // add + check + remove + check
-  ASSERT_EQ(conn.createNewUser("krecov1", "123"), 200);
-  ASSERT_EQ(conn.checkCreds("krecov1", "1234"), 404);
-  ASSERT_EQ(conn.removeUser("krecov1", "123"), 200);
-  ASSERT_EQ(conn.checkCreds("krecov1", "123"), 404);
+		// create existing user + existing with different password
+		QCOMPARE(conn.createNewUser("krecov", "123"), 400);
+		QCOMPARE(conn.createNewUser("krecov", "1234"), 400);
 
-  // remove with wrong password + check + remove + check
-  ASSERT_EQ(conn.removeUser("krecov", "1234"), 400);
-  ASSERT_EQ(conn.checkCreds("krecov", "123"), 200);
-  ASSERT_EQ(conn.removeUser("krecov", "123"), 200);
-  ASSERT_EQ(conn.checkCreds("krecov", "123"), 404);
+		// add + check + remove + check
+		QCOMPARE(conn.createNewUser("krecov1", "123"), 200);
+		QCOMPARE(conn.checkCreds("krecov1", "1234"), 404);
+		QCOMPARE(conn.removeUser("krecov1", "123"), 200);
+		QCOMPARE(conn.checkCreds("krecov1", "123"), 404);
 
-  ASSERT_EQ(conn.getUsers().empty(), true);
-}
+		// remove with wrong password + check + remove + check
+		QCOMPARE(conn.removeUser("krecov", "1234"), 400);
+		QCOMPARE(conn.checkCreds("krecov", "123"), 200);
+		QCOMPARE(conn.removeUser("krecov", "123"), 200);
+		QCOMPARE(conn.checkCreds("krecov", "123"), 404);
 
-TEST(ServiceTests, TestConnectorNotesManager) {
-  Connector conn;
-  auto [username, password] = std::tuple("krecov", "123");
+		QCOMPARE(conn.getUsers().empty(), true);
+	}
 
-  // create + check
-  ASSERT_EQ(conn.createNewUser(username, password), 200);
-  ASSERT_EQ(conn.checkCreds(username, password), 200);
+	void mySecondTest()
+	{
+		// create + check
+		QCOMPARE(conn.createNewUser(username, password), 200);
+		QCOMPARE(conn.checkCreds(username, password), 200);
 
-  // create N times + check notes cnt
-  ASSERT_EQ(conn.createNote(username, password, "Note1"), 200);
-  ASSERT_EQ(conn.createNote(username, password, "Note2"), 200);
-  ASSERT_EQ(conn.createNote(username, password, "Note1"), 200);
-  ASSERT_EQ(conn.createNote(username, password, "AgainNote1"), 200);
-  ASSERT_EQ(conn.getNotes(username, password).size(), 4);
+		// create N times + check notes cnt
+		QCOMPARE(conn.createNote(username, password, "Note1"), 200);
+		QCOMPARE(conn.createNote(username, password, "Note2"), 200);
+		QCOMPARE(conn.createNote(username, password, "Note1"), 200);
+		QCOMPARE(conn.createNote(username, password, "AgainNote1"), 200);
+		QCOMPARE(conn.getNotes(username, password).size(), 4);
 
-  // remove + remove wrong idx + remove wrong idx + check notes cnt
-  ASSERT_EQ(conn.removeNote(username, password, 3), 200);
-  ASSERT_EQ(conn.removeNote(username, password, 3), 400);
-  ASSERT_EQ(conn.removeNote(username, password, -1), 400);
-  ASSERT_EQ(conn.getNotes(username, password).size(), 3);
+		// remove + remove wrong idx + remove wrong idx + check notes cnt
+		QCOMPARE(conn.removeNote(username, password, 3), 200);
+		QCOMPARE(conn.removeNote(username, password, 3), 400);
+		QCOMPARE(conn.removeNote(username, password, -1), 400);
+		QCOMPARE(conn.getNotes(username, password).size(), 3);
 
-  // remove user + check notes are empty
-  ASSERT_EQ(conn.removeUser(username, password), 200);
-  ASSERT_EQ(conn.getNotes(username, password).size(), 0);
-}
+		// remove user + check notes are empty
+		QCOMPARE(conn.removeUser(username, password), 200);
+		QCOMPARE(conn.getNotes(username, password).size(), 0);
+	}
+};
 
-int main(int argc, char* argv[]) {
-  google::InitGoogleLogging(argv[0]);
-  testing::InitGoogleTest(&argc, argv);
-  FLAGS_alsologtostderr = 1;
-  QApplication app{argc, argv};
-
-  return RUN_ALL_TESTS() && app.exec();
-}
+QTEST_MAIN(ClientTests)
+#include "tests.moc"

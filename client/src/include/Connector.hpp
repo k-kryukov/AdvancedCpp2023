@@ -25,6 +25,12 @@ public:
     Connector(QString s) : url_(s) {}
     Connector() {}
 
+    Connector(Connector const&) = delete;
+    Connector(Connector&&) = default;
+
+    auto& operator=(Connector const&) = delete;
+    Connector& operator=(Connector&&) = default;
+
     auto checkCreds(QString username, QString passwordHash) {
         QNetworkRequest request;
         QUrlQuery query;
