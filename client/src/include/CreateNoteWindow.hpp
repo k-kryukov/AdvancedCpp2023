@@ -36,14 +36,7 @@ private slots:
     void pushButton() {
         widget.hide();
 
-        auto res = service.createNote(username_, password_, noteText.text());
-        QMessageBox messageBox;
-        messageBox.setFixedSize(500,200);
-        if (res / 100 != 2)
-            messageBox.critical(&widget, "Error", "An error has occured: usually it means that note does not exist");
-        else
-            messageBox.information(&widget, "OK!", "");
-
+        service.createNote(username_, password_, noteText.text());
         widget.hide();
     }
 

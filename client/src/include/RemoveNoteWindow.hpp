@@ -51,11 +51,7 @@ private slots:
             return;
         }
 
-        auto res = service.removeNote(username_, password_, noteNumber);
-        if (res / 100 != 2)
-            messageBox.critical(&widget, "Error", "An error has occured: usually it means that note does not exist");
-        else
-            messageBox.information(&widget, "OK!", "");
+        service.removeNote(username_, password_, noteNumber);
     }
 
 public:

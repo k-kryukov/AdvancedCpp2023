@@ -48,30 +48,6 @@ public:
         for (auto&& note : notes) {
             auto noteNumber = 1;
             QLabel *label = new QLabel(note, &window);
-            // label->setClickCallback(
-            //     this,
-            //     [this, user = currentUser_, passwd = currentPassword_, noteNumber] () {
-            //         LOG(INFO) << "Destroying!";
-            //         QMessageBox messageBox;
-            //         messageBox.setFixedSize(500,200);
-
-            //         auto ok = true;
-            //         if (!ok) {
-            //             messageBox.critical(
-            //                 nullptr,
-            //                 "Error",
-            //                 "Input is not a number"
-            //             );
-            //             return;
-            //         }
-
-            //         auto res = service.removeNote(user, passwd, noteNumber);
-            //         if (res / 100 != 2)
-            //             messageBox.critical(nullptr, "Error", "An error has occured: usually it means that note does not exist");
-            //         else
-            //             messageBox.information(nullptr, "OK!", "");
-            //     }
-            // );
 
             layout.addWidget(label);
             labels_.push_back(label);
