@@ -17,6 +17,7 @@
 #include <QMessageBox>
 
 #include "QTExtended.hpp"
+#include "ConnectionCallback.hpp"
 
 class Connector {
     QUrl url_{"http://localhost:12345"};
@@ -170,16 +171,7 @@ public:
         request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
         auto resp = manager.post(request, jsonDoc);
         QObject::connect(resp, &QNetworkReply::finished,
-            [resp] () {
-                QMessageBox messageBox;
-                messageBox.setFixedSize(500,200);
-                auto status = resp->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-
-                if (status / 100 != 2)
-                    messageBox.information(nullptr, "Error!", "");
-                else
-                    messageBox.information(nullptr, "Creating user OP is done!", "");
-            }
+            [resp] () { ConnectionCallback::handleFinished(resp, "User creation"); }
         );
         if (!loop.isRunning())
             loop.exec();
@@ -204,16 +196,7 @@ public:
         request.setUrl(url);
         auto resp = manager.post(request, jsonDoc);
         QObject::connect(resp, &QNetworkReply::finished,
-            [resp] () {
-                QMessageBox messageBox;
-                messageBox.setFixedSize(500,200);
-                auto status = resp->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-
-                if (status / 100 != 2)
-                    messageBox.information(nullptr, "Error!", "");
-                else
-                    messageBox.information(nullptr, "Create note OP is done!", "");
-            }
+            [resp] () { ConnectionCallback::handleFinished(resp, "Note creation"); }
         );
         if (!loop.isRunning())
             loop.exec();
@@ -237,16 +220,7 @@ public:
 
         auto resp = manager.deleteResource(request);
         QObject::connect(resp, &QNetworkReply::finished,
-            [resp] () {
-                QMessageBox messageBox;
-                messageBox.setFixedSize(500,200);
-                auto status = resp->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-
-                if (status / 100 != 2)
-                    messageBox.information(nullptr, "Error!", "");
-                else
-                    messageBox.information(nullptr, "Remove note OP is done!", "");
-            }
+            [resp] () { ConnectionCallback::handleFinished(resp, "Note removing"); }
         );
         if (!loop.isRunning())
             loop.exec();
@@ -269,16 +243,7 @@ public:
 
         auto resp = manager.deleteResource(request);
         QObject::connect(resp, &QNetworkReply::finished,
-            [resp] () {
-                QMessageBox messageBox;
-                messageBox.setFixedSize(500,200);
-                auto status = resp->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-
-                if (status / 100 != 2)
-                    messageBox.information(nullptr, "Error!", "");
-                else
-                    messageBox.information(nullptr, "Remove user OP is done!", "");
-            }
+            [resp] () { ConnectionCallback::handleFinished(resp, "User removing"); }
         );
         if (!loop.isRunning())
             loop.exec();
