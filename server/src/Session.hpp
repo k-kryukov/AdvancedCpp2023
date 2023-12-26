@@ -15,13 +15,18 @@ namespace beast = boost::beast;
 
 class Session : public std::enable_shared_from_this<Session> {
     asio::ip::tcp::socket socket_;
+    asio::io_context& context_;
+    bool contextStarted_{false};
+    constexpr static asio::chrono::seconds timeout{60}; // must be 60
+    asio::steady_timer timer;
+
     Handler& handler_;
 
     using RequestType = beast::http::request<beast::http::string_body>;
 
 public:
-    Session(asio::ip::tcp::socket socket, Handler& handler)
-        : socket_{std::move(socket)}, handler_{handler} {}
+    Session(asio::ip::tcp::socket socket, Handler& handler, asio::io_context& context)
+        : socket_{std::move(socket)}, handler_{handler}, context_{context}, timer{context_, timeout} {}
 
     void handle() {
         try {
@@ -38,6 +43,15 @@ public:
     }
 
     void dispatch() {
+        timer.expires_after(timeout);
+        timer.async_wait([sess = shared_from_this()] (auto err) {
+            if (err)
+                LOG(ERROR) << "Error while waiting timer: " << err;
+
+            LOG(INFO) << "Closing socket...";
+            sess->socket_.close();
+        });
+
         LOG(INFO) << "Reading request!";
         auto buffer = std::make_shared<beast::flat_buffer>();
         auto request = std::make_shared<beast::http::request<beast::http::string_body>>();
@@ -45,8 +59,15 @@ public:
         beast::http::async_read(socket_, *buffer, *request,
             [self = shared_from_this(), buffer, request] (auto err, auto cnt) {
                 constexpr auto eof = 1;
+                constexpr auto cancelled = 125;
                 if (err.value() == eof) {
                     LOG(INFO) << "Socket is closed!"; return;
+                }
+                else if (err.value() == cancelled) {
+                    LOG(ERROR) << "READ is cancelled!: "; return;
+                }
+                else if (err.value() != 0) {
+                    LOG(ERROR) << "Unexpected error: " << err; return;
                 }
 
                 LOG(INFO) << "Request->target is " << request->target();
@@ -65,7 +86,17 @@ public:
                 );
 
                 beast::http::async_write(self->socket_, *resp,
-                    [resp, self] (auto err, auto bytes_transferred) { /* self->dispatch(); */ }
+                    [resp, self] (auto err, auto bytes_transferred) {
+                        constexpr auto cancelled = 125;
+                        if (err.value() == cancelled) {
+                            LOG(ERROR) << "READ is cancelled!: "; return;
+                        }
+                        else if (err.value()) {
+                            LOG(ERROR) << "Unexpected error: " << err; return;
+                        }
+
+                        self->dispatch();
+                    }
                 );
             }
         );

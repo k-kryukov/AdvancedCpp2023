@@ -14,16 +14,29 @@
 #include <QJsonArray>
 #include <QByteArray>
 #include <QEventLoop>
+#include <QMessageBox>
 
 #include "QTExtended.hpp"
+#include "ConnectionCallback.hpp"
 
 class Connector {
     QUrl url_{"http://localhost:12345"};
     QNetworkAccessManager manager;
+    QEventLoop loop;
 
 public:
-    Connector(QString s) : url_(s) {}
+    Connector(QString s) : url_(s) { }
     Connector() {}
+
+    Connector(Connector const&) = delete;
+    Connector(Connector&&) = default;
+
+    auto& operator=(Connector const&) = delete;
+    Connector& operator=(Connector&&) = default;
+
+    ~Connector() {
+        loop.exit();
+    }
 
     auto checkCreds(QString username, QString passwordHash) {
         QNetworkRequest request;
@@ -40,9 +53,9 @@ public:
         request.setUrl(url);
 
         auto resp = manager.get(request);
-        QEventLoop loop;
         QObject::connect(resp, &QNetworkReply::finished, &loop, &QEventLoop::quit);
-        loop.exec();
+        if (!loop.isRunning())
+            loop.exec();
 
         if (resp->error() != 0) {
             LOG(ERROR) << resp->errorString();
@@ -67,9 +80,9 @@ public:
         request.setUrl(url);
 
         auto resp = manager.get(request);
-        QEventLoop loop;
         QObject::connect(resp, &QNetworkReply::finished, &loop, &QEventLoop::quit);
-        loop.exec();
+        if (!loop.isRunning())
+            loop.exec();
 
         if (resp->error() != 0) {
             LOG(ERROR) << resp->error();
@@ -108,9 +121,9 @@ public:
         LOG(INFO) << url.toString();
 
         auto resp = manager.get(request);
-        QEventLoop loop;
         QObject::connect(resp, &QNetworkReply::finished, &loop, &QEventLoop::quit);
-        loop.exec();
+        if (!loop.isRunning())
+            loop.exec();
 
         if (resp->error() != 0) {
             LOG(ERROR) << resp->error();
@@ -157,18 +170,16 @@ public:
         request.setUrl(url);
         request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
         auto resp = manager.post(request, jsonDoc);
-        QEventLoop loop;
-        QObject::connect(resp, &QNetworkReply::finished, &loop, &QEventLoop::quit);
-        loop.exec();
+        QObject::connect(resp, &QNetworkReply::finished,
+            [resp] () { ConnectionCallback::handleFinished(resp, "User creation"); }
+        );
+        if (!loop.isRunning())
+            loop.exec();
 
-        if (resp->error() != 0)
-            LOG(ERROR) << "Error: " << resp->errorString();
-
-        LOG(INFO) << "Status code: " << resp->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-        return resp->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        return 200;
     }
 
-    int createNote(QString username, QString password, QString noteText) {
+    auto createNote(QString username, QString password, QString noteText) {
         QNetworkRequest request;
         QUrlQuery query;
 
@@ -184,16 +195,13 @@ public:
 
         request.setUrl(url);
         auto resp = manager.post(request, jsonDoc);
-        QEventLoop loop;
-        QObject::connect(resp, &QNetworkReply::finished, &loop, &QEventLoop::quit);
-        loop.exec();
+        QObject::connect(resp, &QNetworkReply::finished,
+            [resp] () { ConnectionCallback::handleFinished(resp, "Note creation"); }
+        );
+        if (!loop.isRunning())
+            loop.exec();
 
-        if (resp->error() != 0)
-            LOG(ERROR) << "Error: " << resp->errorString();
-
-        LOG(INFO) << "Status: " << resp->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-
-        return resp->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        return 200;
     }
 
     auto removeNote(QString username, QString password, unsigned num) {
@@ -211,16 +219,13 @@ public:
         request.setUrl(url);
 
         auto resp = manager.deleteResource(request);
-        QEventLoop loop;
-        QObject::connect(resp, &QNetworkReply::finished, &loop, &QEventLoop::quit);
-        loop.exec();
+        QObject::connect(resp, &QNetworkReply::finished,
+            [resp] () { ConnectionCallback::handleFinished(resp, "Note removing"); }
+        );
+        if (!loop.isRunning())
+            loop.exec();
 
-        if (resp->error() != 0)
-            LOG(ERROR) << "Error: " << resp->errorString();
-
-        LOG(INFO) << "Status: " << resp->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-
-        return resp->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        return 200;
     }
 
     int removeUser(QString username, QString password) {
@@ -237,15 +242,12 @@ public:
         request.setUrl(url);
 
         auto resp = manager.deleteResource(request);
-        QEventLoop loop;
-        QObject::connect(resp, &QNetworkReply::finished, &loop, &QEventLoop::quit);
-        loop.exec();
+        QObject::connect(resp, &QNetworkReply::finished,
+            [resp] () { ConnectionCallback::handleFinished(resp, "User removing"); }
+        );
+        if (!loop.isRunning())
+            loop.exec();
 
-        if (resp->error() != 0)
-            LOG(ERROR) << "Error: " << resp->errorString();
-
-        LOG(INFO) << "Status: " << resp->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-
-        return resp->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        return 200;
     }
 };
