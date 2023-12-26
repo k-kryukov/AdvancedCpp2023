@@ -30,12 +30,11 @@ public:
     void start_ctx() { io_context.run(); }
 
     void start() {
-        // I would like to create Sessions and move socket there
         LOG(INFO) << "Accepting on " << port_;
         acceptor.async_accept(socket_, [this] (auto err) {
             LOG(INFO) << "Accepted!";
 
-            auto sess = std::make_shared<Session>(std::move(socket_), handler_);
+            auto sess = std::make_shared<Session>(std::move(socket_), handler_, io_context);
             sess->handle();
 
             start();
